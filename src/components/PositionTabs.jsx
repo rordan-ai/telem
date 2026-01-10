@@ -24,7 +24,7 @@ export default function PositionTabs({ activePosition, onPositionChange }) {
 
             {isActive &&
             <motion.div
-              layoutId="activeTab" className="bg-yellow-600 rounded-xl absolute inset-0 shadow-sm"
+              layoutId="activeTab" className="bg-slate-300 rounded-xl absolute inset-0 shadow-sm"
 
               transition={{ type: "spring", duration: 0.4 }} />
 
