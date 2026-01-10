@@ -166,9 +166,6 @@ export default function Recruitment() {
           // שמירת המפתח לצורך זיהוי מחיקות
           sheetKeys.add(key);
 
-          // הוספה רק אם לא קיים
-          if (existingMap.has(key)) continue;
-
           const candidateData = {
             name: idx.name !== -1 ? String(row[idx.name] ?? '') : '',
             phone: phoneRaw,
