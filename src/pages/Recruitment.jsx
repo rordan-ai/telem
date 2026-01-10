@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
 
+
 const SHEET_ID = "12MZERyehuXxMUix9LYQSpdjespJ2bpDx1nyQYG-M4N4";
 
 export default function Recruitment() {
@@ -15,6 +16,7 @@ export default function Recruitment() {
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
   const queryClient = useQueryClient();
 
   const { data: candidates = [], isLoading } = useQuery({
@@ -76,10 +78,10 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // Fetch existing candidates to deduplicate by phone
-      const existingCandidates = await base44.entities.Candidate.list();
-      const existingPhones = new Set(existingCandidates.map((c) => String(c.phone || "").replace(/\D/g, "")));
-      const newCandidates = [];
+      const existing = await base44.entities.Candidate.list();
+      const existingPhones = new Set(
+        (existing || []).map(c => String(c.phone || '').replace(/\D/g, ''))
+      );
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -88,34 +90,8 @@ export default function Recruitment() {
         { name: "manager_commerce", sheetName: "מנהל סחר" }
       ];
 
-      const normalizeHeader = (t) => String(t || '')
-        .replace(/\uFEFF/g, '')
-        .replace(/[\u200B-\u200D\u2060]/g, '')
-        .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
-        .replace(/\u00A0/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      const findIndexSmart = (headers, names) => {
-        for (const n of names) {
-          const exact = headers.findIndex((h) => String(h).trim() === n);
-          if (exact !== -1) return exact;
-        }
-        for (const n of names) {
-          const idx = headers.findIndex((h) => String(h).toLowerCase().includes(n.toLowerCase()));
-          if (idx !== -1) return idx;
-        }
-        return -1;
-      };
-
-      const findIndexName = (headers) => {
-        let exact = headers.findIndex((h) => h === "שם מועמד" || h === "שם מלא");
-        if (exact !== -1) return exact;
-        let incl = headers.findIndex((h) => h.includes("מועמד") || h.includes("שם מלא"));
-        if (incl !== -1) return incl;
-        let generic = headers.findIndex((h) => h.startsWith("שם") && !h.includes("קמפיין"));
-        return generic;
-      };
+      const newCandidates = [];
+      let duplicates = 0;
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
@@ -126,65 +102,91 @@ export default function Recruitment() {
         const rows = parseCSV(csvText);
         if (!rows || rows.length < 2) continue;
 
+        const normalizeHeader = (t) => String(t || '')
+          .replace(/\uFEFF/g, '')
+          .replace(/[\u200B-\u200D\u2060]/g, '')
+          .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
+          .replace(/\u00A0/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
         const headers = rows[0].map(normalizeHeader);
+
+        const findIndex = (names) => {
+          for (const n of names) {
+            const i = headers.findIndex(h => h === n);
+            if (i !== -1) return i;
+          }
+          for (const n of names) {
+            const i = headers.findIndex(h => h.includes(n));
+            if (i !== -1) return i;
+          }
+          return -1;
+        };
+        const nameIdx = (() => {
+          let i = headers.findIndex(h => h === "שם מועמד" || h === "שם מלא");
+          if (i !== -1) return i;
+          i = headers.findIndex(h => h.includes("מועמד") || h.includes("שם מלא"));
+          if (i !== -1) return i;
+          return headers.findIndex(h => h.startsWith("שם") && !h.includes("קמפיין"));
+        })();
+
         const idx = {
-          name: findIndexName(headers),
-          phone: findIndexSmart(headers, ["טלפון", "נייד", "סלולרי"]),
-          email: findIndexSmart(headers, ["אימייל", "דואר", "מייל"]),
-          branch: findIndexSmart(headers, ["מודעה", "סניף", "מועמדות לסניף"]),
-          campaign: findIndexSmart(headers, ["שם הקמפיין", "קמפיין"]),
-          time: findIndexSmart(headers, ["תאריך ושעה", "תאריך", "שעה"]),
-          city: findIndexSmart(headers, ["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
-          exp: findIndexSmart(headers, ["האם יש ניסיון", "ניסיון"]),
-          job: findIndexSmart(headers, ["מועמד למשרה", "משרה", "תפקיד"]),
-          expDesc: findIndexSmart(headers, ["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
-          working: findIndexSmart(headers, ["עובד כרגע?", "עובד כרגע"]),
-          transport: findIndexSmart(headers, ["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
-          notes: findIndexSmart(headers, ["הערות"])
+          name: nameIdx,
+          phone: findIndex(["טלפון", "נייד", "סלולרי"]),
+          email: findIndex(["אימייל", "דואר", "מייל"]),
+          branch: findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
+          campaign: findIndex(["שם הקמפיין", "קמפיין"]),
+          time: findIndex(["תאריך ושעה", "תאריך", "שעה"]),
+          city: findIndex(["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
+          exp: findIndex(["האם יש ניסיון", "ניסיון"]),
+          job: findIndex(["מועמד למשרה", "משרה", "תפקיד"]),
+          expDesc: findIndex(["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
+          working: findIndex(["עובד כרגע?", "עובד כרגע"]),
+          transport: findIndex(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
+          notes: findIndex(["הערות"])
         };
 
-        if (idx.name === -1 || idx.phone === -1) continue;
-
         for (const row of rows.slice(1)) {
-          if (!row || row.every((c) => !String(c || '').trim())) continue;
-          const name = row[idx.name];
-          const phone = row[idx.phone];
-          if (!name || !phone) continue;
-          const cleanPhone = String(phone).replace(/\D/g, "");
-          if (!cleanPhone || cleanPhone.length < 9) continue;
-          if (existingPhones.has(cleanPhone)) continue;
+          const name = idx.name !== -1 ? String(row[idx.name] || '').trim() : '';
+          const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] || '').trim() : '';
+          // דרישת סכימה מחייבת שם+טלפון — ללא סיבות נוספות
+          if (!name || !phoneRaw) continue;
+          const cleaned = phoneRaw.replace(/\D/g, '');
+          if (!cleaned) continue;
+          if (existingPhones.has(cleaned)) { duplicates++; continue; }
 
           newCandidates.push({
-            name: String(name),
-            phone: String(phone),
-            email: idx.email !== -1 ? String(row[idx.email] || "") : "",
+            name,
+            phone: phoneRaw,
+            email: idx.email !== -1 ? String(row[idx.email] || '') : '',
             position: tab.name,
-            branch: idx.branch !== -1 ? String(row[idx.branch] || "") : "",
-            campaign: idx.campaign !== -1 ? String(row[idx.campaign] || "") : "",
-            contact_time: idx.time !== -1 ? String(row[idx.time] || "") : "",
-            city: idx.city !== -1 ? String(row[idx.city] || "") : "",
-            has_experience: idx.exp !== -1 ? String(row[idx.exp] || "") : "",
-            job_title: idx.job !== -1 ? String(row[idx.job] || "") : "",
-            experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] || "") : "",
-            currently_working: idx.working !== -1 ? String(row[idx.working] || "") : "",
-            transportation: idx.transport !== -1 ? String(row[idx.transport] || "") : "",
+            branch: idx.branch !== -1 ? String(row[idx.branch] || '') : '',
+            campaign: idx.campaign !== -1 ? String(row[idx.campaign] || '') : '',
+            contact_time: idx.time !== -1 ? String(row[idx.time] || '') : '',
+            city: idx.city !== -1 ? String(row[idx.city] || '') : '',
+            has_experience: idx.exp !== -1 ? String(row[idx.exp] || '') : '',
+            job_title: idx.job !== -1 ? String(row[idx.job] || '') : '',
+            experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] || '') : '',
+            currently_working: idx.working !== -1 ? String(row[idx.working] || '') : '',
+            transportation: idx.transport !== -1 ? String(row[idx.transport] || '') : '',
             status: "not_handled",
-            notes: idx.notes !== -1 ? String(row[idx.notes] || "") : "",
-            sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
+            notes: idx.notes !== -1 ? String(row[idx.notes] || '') : '',
+            sheet_row_id: `${tab.name}_${cleaned}_${Date.now()}`
           });
-          existingPhones.add(cleanPhone);
+          existingPhones.add(cleaned);
         }
       }
 
-      if (newCandidates.length > 0) {
+      if (newCandidates.length) {
         await base44.entities.Candidate.bulkCreate(newCandidates);
       }
 
-      setImportMessage(`יובאו ${newCandidates.length} מועמדים חדשים`);
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      setImportMessage(`יובאו ${newCandidates.length} חדשים, דילג על ${duplicates} כפולים.`);
       setTimeout(() => setImportMessage(null), 8000);
-      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
     } catch (e) {
-      setImportMessage("שגיאה בייבוא: " + (e?.message || e));
+      setImportMessage("שגיאה בייבוא נתונים.");
+      setTimeout(() => setImportMessage(null), 8000);
     }
     setIsImporting(false);
   };
@@ -283,7 +285,7 @@ export default function Recruitment() {
             </motion.div>
           }
 
-
+          {importReport && <ImportReport report={importReport} />}
         </div>
 
         {/* Stats */}
