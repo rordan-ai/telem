@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, MessageCircle, ChevronDown, User } from "lucide-react";
+import { Phone, MessageCircle, ChevronDown, User, MapPin, Clock, Briefcase, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
+import { format } from "date-fns";
 
 const statusOptions = [
   { value: "not_handled", label: "לא טופל", color: "bg-slate-100 text-slate-600 border-slate-200" },
@@ -53,6 +54,16 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
   const whatsappUrl = `https://wa.me/${formatPhoneForWhatsApp(candidate.phone)}`;
 
+  const formatContactTime = (timeStr) => {
+    if (!timeStr) return "";
+    try {
+      const date = new Date(timeStr);
+      return format(date, "dd/MM HH:mm");
+    } catch {
+      return timeStr;
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -67,16 +78,32 @@ export default function CandidateCard({ candidate, onUpdate }) {
               <User className="w-5 h-5 text-slate-500" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-slate-800 truncate text-base">
-                {candidate.name}
-              </h3>
-              <a
-                href={`tel:${candidate.phone}`}
-                className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
-                dir="ltr"
-              >
-                {candidate.phone}
-              </a>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-slate-800 text-base">
+                  {candidate.name}
+                </h3>
+                {candidate.contact_time && (
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatContactTime(candidate.contact_time)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap mt-1">
+                <a
+                  href={`tel:${candidate.phone}`}
+                  className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                  dir="ltr"
+                >
+                  {candidate.phone}
+                </a>
+                {candidate.city && (
+                  <span className="text-sm text-slate-500 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {candidate.city}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           
@@ -115,38 +142,73 @@ export default function CandidateCard({ candidate, onUpdate }) {
           </Select>
         </div>
 
-        {/* Expandable Notes */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors py-2"
-        >
-          <span>הערות</span>
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronDown className="w-4 h-4" />
-          </motion.div>
-        </button>
+        {/* Notes - Always Visible */}
+        {notes && (
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+            <p className="text-sm text-slate-700 whitespace-pre-wrap">{notes}</p>
+          </div>
+        )}
 
-        <motion.div
-          initial={false}
-          animate={{
-            height: isExpanded ? "auto" : 0,
-            opacity: isExpanded ? 1 : 0,
-          }}
-          transition={{ duration: 0.2 }}
-          className="overflow-hidden"
-        >
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            onBlur={handleNotesBlur}
-            placeholder="הוסף הערות..."
-            className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[80px] focus:border-slate-300 focus:ring-slate-300"
-            dir="rtl"
-          />
-        </motion.div>
+        <Textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={handleNotesBlur}
+          placeholder="הוסף הערות..."
+          className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 mb-3"
+          dir="rtl"
+        />
+
+        {/* Expandable Details */}
+        {(candidate.age || candidate.experience || candidate.availability) && (
+          <>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors py-2"
+            >
+              <span>פרטים נוספים</span>
+              <motion.div
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronDown className="w-4 h-4" />
+              </motion.div>
+            </button>
+
+            <motion.div
+              initial={false}
+              animate={{
+                height: isExpanded ? "auto" : 0,
+                opacity: isExpanded ? 1 : 0,
+              }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-2 pt-2 pb-1">
+                {candidate.age && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-500">גיל:</span>
+                    <span className="text-slate-700">{candidate.age}</span>
+                  </div>
+                )}
+                {candidate.experience && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Briefcase className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-500">ניסיון:</span>
+                    <span className="text-slate-700">{candidate.experience}</span>
+                  </div>
+                )}
+                {candidate.availability && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-500">זמינות:</span>
+                    <span className="text-slate-700">{candidate.availability}</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
 
         {isSaving && (
           <div className="text-xs text-slate-400 mt-2 text-center">שומר...</div>

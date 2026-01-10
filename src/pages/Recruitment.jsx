@@ -48,57 +48,66 @@ export default function Recruitment() {
     setIsImporting(true);
     
     try {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-      const response = await fetch(csvUrl);
-      const csvText = await response.text();
-
-      const lines = csvText.split("\n").filter(line => line.trim());
-      if (lines.length < 2) {
-        setIsImporting(false);
-        return;
-      }
-
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-      const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
-      const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד"));
-      const positionIndex = headers.findIndex(h => h.includes("תפקיד") || h.includes("position") || h.includes("משרה"));
-
-      if (nameIndex === -1 || phoneIndex === -1) {
-        setIsImporting(false);
-        return;
-      }
-
       const existingCandidates = await base44.entities.Candidate.list();
       const existingPhones = new Set(existingCandidates.map(c => c.phone.replace(/\D/g, "")));
-
       const newCandidates = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        const name = values[nameIndex]?.trim();
-        const phone = values[phoneIndex]?.trim();
-        let position = values[positionIndex]?.trim().toLowerCase() || "";
 
-        if (!name || !phone) continue;
+      // Fetch both tabs
+      const tabs = [
+        { name: "barista", gid: "0" },
+        { name: "cook", gid: "1924313319" }
+      ];
 
-        const cleanPhone = phone.replace(/\D/g, "");
-        if (existingPhones.has(cleanPhone)) continue;
+      for (const tab of tabs) {
+        try {
+          const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`;
+          const response = await fetch(csvUrl);
+          const csvText = await response.text();
 
-        let positionValue = "barista";
-        if (position.includes("טבח") || position.includes("cook") || position.includes("מטבח")) {
-          positionValue = "cook";
+          const lines = csvText.split("\n").filter(line => line.trim());
+          if (lines.length < 2) continue;
+
+          const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+          const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
+          const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד"));
+          const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך"));
+          const cityIndex = headers.findIndex(h => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
+          const ageIndex = headers.findIndex(h => h.includes("גיל") || h.includes("age"));
+          const experienceIndex = headers.findIndex(h => h.includes("ניסיון") || h.includes("experience"));
+          const availabilityIndex = headers.findIndex(h => h.includes("זמינות") || h.includes("availability"));
+          const notesIndex = headers.findIndex(h => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
+
+          if (nameIndex === -1 || phoneIndex === -1) continue;
+
+          for (let i = 1; i < lines.length; i++) {
+            const values = parseCSVLine(lines[i]);
+            const name = values[nameIndex]?.trim();
+            const phone = values[phoneIndex]?.trim();
+
+            if (!name || !phone) continue;
+
+            const cleanPhone = phone.replace(/\D/g, "");
+            if (existingPhones.has(cleanPhone)) continue;
+
+            newCandidates.push({
+              name,
+              phone,
+              position: tab.name,
+              contact_time: timeIndex !== -1 ? values[timeIndex]?.trim() : "",
+              city: cityIndex !== -1 ? values[cityIndex]?.trim() : "",
+              age: ageIndex !== -1 ? values[ageIndex]?.trim() : "",
+              experience: experienceIndex !== -1 ? values[experienceIndex]?.trim() : "",
+              availability: availabilityIndex !== -1 ? values[availabilityIndex]?.trim() : "",
+              status: "not_handled",
+              notes: notesIndex !== -1 ? values[notesIndex]?.trim() : "",
+              sheet_row_id: `${tab.name}_row_${i}`,
+            });
+            
+            existingPhones.add(cleanPhone);
+          }
+        } catch (tabError) {
+          console.error(`Error fetching ${tab.name} tab:`, tabError);
         }
-
-        newCandidates.push({
-          name,
-          phone,
-          position: positionValue,
-          status: "not_handled",
-          notes: "",
-          sheet_row_id: `row_${i}`,
-        });
-        
-        existingPhones.add(cleanPhone);
       }
 
       if (newCandidates.length > 0) {
@@ -137,9 +146,11 @@ export default function Recruitment() {
               <h1 className="text-xl font-bold text-slate-800">גיוס מועמדים</h1>
               <p className="text-sm text-slate-500">ניהול מועמדים לתפקידים</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/d56033b78_1.jpg" 
+              alt="גיוטליה לוגו" 
+              className="w-16 h-16 rounded-full object-cover shadow-md"
+            />
           </div>
           
           <PositionTabs
