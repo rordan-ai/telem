@@ -200,7 +200,7 @@ export default function Recruitment() {
           seenKeys.add(key);
           addedCount++;
 
-          toCreate.push({
+          const candidateData = {
             name,
             phone: phoneRaw,
             email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
@@ -217,7 +217,19 @@ export default function Recruitment() {
             status: "not_handled",
             notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : '',
             sheet_row_id: `${tab.name}_${cleaned}_${Date.now()}`
-            });
+          };
+          
+          // שדות נוספים למנהל סחר בלבד
+          if (tab.name === "manager_commerce") {
+            candidateData.commerce_experience = idx.commerceExp !== -1 ? String(row[idx.commerceExp] ?? '') : '';
+            candidateData.comax_proficiency = idx.comax !== -1 ? String(row[idx.comax] ?? '') : '';
+            candidateData.planogram_skills = idx.planogram !== -1 ? String(row[idx.planogram] ?? '') : '';
+            candidateData.supplier_negotiation = idx.supplierNeg !== -1 ? String(row[idx.supplierNeg] ?? '') : '';
+            candidateData.pnl_analysis = idx.pnl !== -1 ? String(row[idx.pnl] ?? '') : '';
+            candidateData.availability = idx.availability !== -1 ? String(row[idx.availability] ?? '') : '';
+          }
+          
+          toCreate.push(candidateData);
             }
 
             debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים, ${skippedExisting} קיימים, ${skippedDupe} כפולים`);
