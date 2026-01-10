@@ -81,41 +81,61 @@ export default function Recruitment() {
           if (lines.length < 2) continue;
 
           const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, "").toLowerCase());
+          
+          console.log(`${tab.name} headers:`, headers);
+          
           const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
-          const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד"));
-          const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך"));
+          const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
+          const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
           const cityIndex = headers.findIndex(h => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
           const ageIndex = headers.findIndex(h => h.includes("גיל") || h.includes("age"));
-          const experienceIndex = headers.findIndex(h => h.includes("ניסיון") || h.includes("experience"));
+          const experienceIndex = headers.findIndex(h => h.includes("ניסיון") || h.includes("experience") || h.includes("תאור"));
           const availabilityIndex = headers.findIndex(h => h.includes("זמינות") || h.includes("availability"));
           const notesIndex = headers.findIndex(h => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
+          
+          console.log(`${tab.name} indexes - name:${nameIndex}, phone:${phoneIndex}`);
 
           if (nameIndex === -1 || phoneIndex === -1) continue;
 
           for (let i = 1; i < lines.length; i++) {
             const values = parseCSVLine(lines[i]);
-            const name = values[nameIndex]?.trim();
-            const phone = values[phoneIndex]?.trim();
+            const name = values[nameIndex]?.trim().replace(/"/g, "");
+            const phone = values[phoneIndex]?.trim().replace(/"/g, "");
 
-            if (!name || !phone) continue;
+            console.log(`${tab.name} row ${i}:`, { name, phone, values });
+
+            if (!name || !phone) {
+              console.log(`Skipping row ${i} - missing name or phone`);
+              continue;
+            }
 
             const cleanPhone = phone.replace(/\D/g, "");
-            if (existingPhones.has(cleanPhone)) continue;
+            if (!cleanPhone || cleanPhone.length < 9) {
+              console.log(`Skipping row ${i} - invalid phone: ${phone}`);
+              continue;
+            }
+            
+            if (existingPhones.has(cleanPhone)) {
+              console.log(`Skipping row ${i} - phone already exists: ${cleanPhone}`);
+              continue;
+            }
 
-            newCandidates.push({
+            const candidate = {
               name,
               phone,
               position: tab.name,
-              contact_time: timeIndex !== -1 ? values[timeIndex]?.trim() : "",
-              city: cityIndex !== -1 ? values[cityIndex]?.trim() : "",
-              age: ageIndex !== -1 ? values[ageIndex]?.trim() : "",
-              experience: experienceIndex !== -1 ? values[experienceIndex]?.trim() : "",
-              availability: availabilityIndex !== -1 ? values[availabilityIndex]?.trim() : "",
+              contact_time: timeIndex !== -1 ? values[timeIndex]?.trim().replace(/"/g, "") : "",
+              city: cityIndex !== -1 ? values[cityIndex]?.trim().replace(/"/g, "") : "",
+              age: ageIndex !== -1 ? values[ageIndex]?.trim().replace(/"/g, "") : "",
+              experience: experienceIndex !== -1 ? values[experienceIndex]?.trim().replace(/"/g, "") : "",
+              availability: availabilityIndex !== -1 ? values[availabilityIndex]?.trim().replace(/"/g, "") : "",
               status: "not_handled",
-              notes: notesIndex !== -1 ? values[notesIndex]?.trim() : "",
+              notes: notesIndex !== -1 ? values[notesIndex]?.trim().replace(/"/g, "") : "",
               sheet_row_id: `${tab.name}_row_${i}`,
-            });
+            };
             
+            console.log(`Adding candidate:`, candidate);
+            newCandidates.push(candidate);
             existingPhones.add(cleanPhone);
           }
         } catch (tabError) {
@@ -123,11 +143,16 @@ export default function Recruitment() {
         }
       }
 
+      console.log(`Total new candidates to import: ${newCandidates.length}`);
+      
       if (newCandidates.length > 0) {
         await base44.entities.Candidate.bulkCreate(newCandidates);
         setImportMessage(`נוספו ${newCandidates.length} מועמדים חדשים`);
         setTimeout(() => setImportMessage(null), 4000);
         queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      } else {
+        setImportMessage("כל המועמדים כבר קיימים במערכת");
+        setTimeout(() => setImportMessage(null), 4000);
       }
     } catch (error) {
       console.error("Import error:", error);
