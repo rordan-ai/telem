@@ -18,8 +18,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTitle } from
+"@/components/ui/alert-dialog";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 
@@ -116,7 +116,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
                   {candidate.name}
                 </h3>
                 {candidate.contact_time &&
-                <span className="text-xs text-slate-500 flex items-center gap-1">
+                <span className="text-slate-50 text-xs flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {formatContactTime(candidate.contact_time)}
                   </span>
@@ -131,7 +131,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
                   {candidate.phone}
                 </a>
                 {candidate.city &&
-                <span className="text-sm text-slate-500 flex items-center gap-1">
+                <span className="text-slate-50 text-sm flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     {candidate.city}
                   </span>
@@ -186,16 +186,16 @@ export default function CandidateCard({ candidate, onUpdate }) {
             placeholder="הוסף הערות..."
             className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 pr-3 pl-10 text-white"
             dir="rtl" />
-          {notes !== candidate.notes && notes.length > 0 && (
-            <button
-              onClick={handleNotesBlur}
-              className="absolute top-2 left-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors"
-              title="שמור הערה">
+          {notes !== candidate.notes && notes.length > 0 &&
+          <button
+            onClick={handleNotesBlur}
+            className="absolute top-2 left-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors"
+            title="שמור הערה">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
               </svg>
             </button>
-          )}
+          }
         </div>
 
 
@@ -226,53 +226,53 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
               <div className="text-slate-50 pt-2 pb-1 space-y-2 text-xs">
                 {candidate.branch &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">מודעה:</span>
                     <span className="text-slate-200">{candidate.branch}</span>
                   </div>
-                }
+              }
                 {candidate.campaign &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">קמפיין:</span>
                     <span className="text-slate-200">{candidate.campaign}</span>
                   </div>
-                }
+              }
                 {candidate.email &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">אימייל:</span>
                     <a href={`mailto:${candidate.email}`} className="text-blue-400 hover:underline break-all">{candidate.email}</a>
                   </div>
-                }
+              }
                 {candidate.has_experience &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">ניסיון:</span>
                     <span className="text-slate-200">{candidate.has_experience}</span>
                   </div>
-                }
+              }
                 {candidate.job_title &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">תפקיד:</span>
                     <span className="text-slate-200">{candidate.job_title}</span>
                   </div>
-                }
+              }
                 {candidate.experience_description &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">תאור ניסיון:</span>
                     <span className="text-slate-200">{candidate.experience_description}</span>
                   </div>
-                }
+              }
                 {candidate.currently_working &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">עובד כרגע:</span>
                     <span className="text-slate-200">{candidate.currently_working}</span>
                   </div>
-                }
+              }
                 {candidate.transportation &&
-                <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                     <span className="text-slate-400 font-semibold min-w-[60px]">רכב/ניידות:</span>
                     <span className="text-slate-200">{candidate.transportation}</span>
                   </div>
-                }
+              }
               </div>
             </motion.div>
           </>
