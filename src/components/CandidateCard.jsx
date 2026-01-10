@@ -145,25 +145,24 @@ export default function CandidateCard({ candidate, onUpdate }) {
           </Select>
         </div>
 
-        {/* Notes - Always Visible */}
-        {notes &&
-        <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-xl relative">
-            <div className="absolute top-2 left-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{notes}</p>
-          </div>
-        }
-
-        <Textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={handleNotesBlur}
-          placeholder="הוסף הערות..."
-          className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 mb-3"
-          dir="rtl" />
+        {/* Notes Input with Save Button */}
+        <div className="relative mb-3">
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="הוסף הערות..."
+            className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 pr-3 pl-10"
+            dir="rtl" />
+          <button
+            onClick={handleNotesBlur}
+            className="absolute top-2 left-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors"
+            title="שמור הערה"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+        </div>
 
 
         {/* Expandable Details */}
