@@ -197,6 +197,100 @@ export default function Recruitment() {
     setIsImporting(false);
   };
 
+  const fetchAndImportWithAI = async () => {
+    setIsImporting(true);
+    setImportMessage("מפעיל סוכן בינה מלאכותית לקריאת הגיליון... (זה עשוי לקחת דקה)");
+
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `
+          Go to the Google Sheet at https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit
+          There are 4 tabs (sheets) with the following names:
+          1. "עובדים כללי" (General)
+          2. "סגן צורן" (Segan Tzoran)
+          3. "סגן באר יעקב" (Segan Beer Yaakov)
+          4. "מנהל סחר" (Manager Commerce)
+
+          Please extract ALL rows from ALL 4 tabs.
+          For each row, extract: Name, Phone, Email, City, Experience, Job Title, Notes, etc.
+          
+          Map the tab/sheet source to the "position" field as follows:
+          - "עובדים כללי" -> "general"
+          - "סגן צורן" -> "segan_tzoran"
+          - "סגן באר יעקב" -> "segan_beer_yaakov"
+          - "מנהל סחר" -> "manager_commerce"
+          
+          Return a JSON object with a "candidates" array.
+        `,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            candidates: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  phone: { type: "string" },
+                  email: { type: "string" },
+                  position: { type: "string" },
+                  branch: { type: "string" },
+                  campaign: { type: "string" },
+                  contact_time: { type: "string" },
+                  city: { type: "string" },
+                  has_experience: { type: "string" },
+                  job_title: { type: "string" },
+                  experience_description: { type: "string" },
+                  currently_working: { type: "string" },
+                  transportation: { type: "string" },
+                  notes: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (response && response.candidates && Array.isArray(response.candidates)) {
+        const existingCandidates = await base44.entities.Candidate.list();
+        const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
+        const newCandidates = [];
+
+        for (const candidate of response.candidates) {
+          if (!candidate.name || !candidate.phone) continue;
+          
+          const cleanPhone = candidate.phone.replace(/\D/g, "");
+          if (cleanPhone.length < 9 || existingPhones.has(cleanPhone)) continue;
+
+          newCandidates.push({
+            ...candidate,
+            status: "not_handled",
+            sheet_row_id: `ai_import_${Date.now()}_${cleanPhone}`
+          });
+          existingPhones.add(cleanPhone);
+        }
+
+        if (newCandidates.length > 0) {
+          await base44.entities.Candidate.bulkCreate(newCandidates);
+          setImportMessage(`ה-AI מצא וייבא ${newCandidates.length} מועמדים חדשים`);
+          queryClient.invalidateQueries({ queryKey: ["candidates"] });
+        } else {
+          setImportMessage("ה-AI סרק את הגיליון אך לא נמצאו מועמדים חדשים");
+        }
+      } else {
+        console.error("AI Response invalid:", response);
+        setImportMessage("שגיאה בפענוח תשובת ה-AI");
+      }
+    } catch (error) {
+      console.error("AI Import error:", error);
+      setImportMessage("שגיאה ביבוא עם AI");
+    }
+    
+    setTimeout(() => setImportMessage(null), 5000);
+    setIsImporting(false);
+  };
+
   // Auto-import on load and every 5 minutes
   useEffect(() => {
     fetchAndImport();
@@ -247,23 +341,21 @@ export default function Recruitment() {
       <main className="bg-slate-500 mx-auto px-4 py-6 max-w-lg">
         {/* Import button and status */}
         <div className="mb-4 space-y-3">
-          <Button
-            onClick={fetchAndImport}
-            disabled={isImporting} className="bg-slate-300 text-slate-900 px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 w-full hover:bg-blue-700">
-
-
-            {isImporting ?
-            <>
-                <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
-                מייבא מהגיליון...
-              </> :
-
-            <>
-                <RefreshCw className="w-4 h-4 ml-2" />
-                רענון נתונים
-              </>
-            }
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={fetchAndImport}
+              disabled={isImporting} className="flex-1 bg-slate-300 text-slate-900 px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow h-9 hover:bg-slate-400">
+              {isImporting ? <RefreshCw className="w-4 h-4 ml-2 animate-spin" /> : <RefreshCw className="w-4 h-4 ml-2" />}
+              {isImporting ? "מייבא..." : "רענון רגיל"}
+            </Button>
+            
+            <Button
+              onClick={fetchAndImportWithAI}
+              disabled={isImporting} className="flex-1 bg-indigo-600 text-white px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow h-9 hover:bg-indigo-700">
+              <span className="text-xs">✨</span>
+              יבוא עם AI
+            </Button>
+          </div>
           
           {importMessage &&
           <motion.div
