@@ -78,16 +78,11 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // שליפת מועמדים קיימים - ניצור מפה לפי טלפון+תפקיד (ללא ניקוי!)
+      // מחיקת כל המועמדים הקיימים לפני ייבוא חדש - סנכרון מלא 1:1
       const existing = await base44.entities.Candidate.list();
-      const existingMap = new Map();
-      existing.forEach(c => {
-        const key = `${c.phone || ''}_${c.position}`;
-        existingMap.set(key, c);
-      });
-      // מפה נוספת לפי ID לסנכרון מחיקות
-      const existingById = new Map();
-      existing.forEach(c => existingById.set(c.id, c));
+      for (const c of existing) {
+        await base44.entities.Candidate.delete(c.id);
+      }
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -97,33 +92,16 @@ export default function Recruitment() {
       ];
 
       const toCreate = [];
-      const toDelete = []; // מועמדים למחיקה (קיימים באפליקציה אך לא בגיליון)
-      const debugInfo = [];
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
-        // Using gviz URL with sheet name for reliable fetching
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
         const res = await fetch(url);
-        if (!res.ok) {
-          debugInfo.push(`${tab.sheetName}: שגיאת רשת`);
-          continue;
-        }
+        if (!res.ok) continue;
         const csvText = await res.text();
-        console.log(`=== ${tab.sheetName} RAW CSV (first 500 chars) ===`);
-        console.log(csvText.substring(0, 500));
-        console.log(`=== ${tab.sheetName} CSV length: ${csvText.length} chars ===`);
 
         const rows = parseCSV(csvText);
-        console.log(`=== ${tab.sheetName} parsed rows: ${rows.length} ===`);
-
-        if (!rows || rows.length < 2) {
-          debugInfo.push(`${tab.sheetName}: אין שורות`);
-          continue;
-        }
-
-        const rowCount = rows.length - 1; // מינוס כותרת
-        let addedCount = 0;
+        if (!rows || rows.length < 2) continue;
 
         const normalizeHeader = (t) => String(t || '')
           .replace(/\uFEFF/g, '')
@@ -146,7 +124,6 @@ export default function Recruitment() {
           return -1;
         };
         const nameIdx = (() => {
-          // בסגן צורן וסגן באר יעקב - שם המועמד בעמודה C (אינדקס 2)
           if (tab.name === "segan_tzoran" || tab.name === "segan_beer_yaakov") {
             return 2;
           }
@@ -157,9 +134,6 @@ export default function Recruitment() {
           return headers.findIndex(h => h.startsWith("שם") && !h.includes("קמפיין"));
         })();
 
-        // לגיליון מנהל סחר - אינדקסים קשיחים לפי מבנה הגיליון
-        // A=0: תאיך כניסה, B=1: שם, C=2: ניסיון בסחר, D=3: שליטה בקומקס
-        // E=4: פלנוגרמות, F=5: ניהול מו"מ, G=6: דוח רווח, H=7: זמינות
         const idx = {
           name: nameIdx,
           phone: findIndex(["טלפון", "נייד", "סלולרי"]),
@@ -174,7 +148,6 @@ export default function Recruitment() {
           working: findIndex(["עובד כרגע?", "עובד כרגע"]),
           transport: findIndex(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
           notes: findIndex(["הערות"]),
-          // שדות מנהל סחר - אינדקסים קשיחים
           commerceExp: tab.name === "manager_commerce" ? 2 : -1,
           comax: tab.name === "manager_commerce" ? 3 : -1,
           planogram: tab.name === "manager_commerce" ? 4 : -1,
@@ -183,28 +156,11 @@ export default function Recruitment() {
           availability: tab.name === "manager_commerce" ? 7 : -1
         };
 
-        // אסוף את כל הטלפונים מהגיליון (ללא ניקוי!) לצורך סנכרון מחיקות
-        const sheetPhones = new Set();
-        
+        // ייבוא כל שורה ללא שום בדיקה - 1:1 מהגיליון
         for (const row of rows.slice(1)) {
-          const name = idx.name !== -1 ? String(row[idx.name] ?? '') : '';
-          const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
-
-          // מפתח ייחודי - טלפון כמו שהוא + תפקיד (ללא ניקוי!)
-          const key = `${phoneRaw}_${tab.name}`;
-          
-          // שמור לסנכרון מחיקות
-          sheetPhones.add(phoneRaw);
-
-          // דילוג על קיימים בלבד (ללא בדיקת כפילויות!)
-          if (existingMap.has(key)) {
-            continue;
-          }
-          addedCount++;
-
           const candidateData = {
-            name,
-            phone: phoneRaw,
+            name: idx.name !== -1 ? String(row[idx.name] ?? '') : '',
+            phone: idx.phone !== -1 ? String(row[idx.phone] ?? '') : '',
             email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
             position: tab.name,
             branch: idx.branch !== -1 ? String(row[idx.branch] ?? '') : '',
@@ -217,11 +173,9 @@ export default function Recruitment() {
             currently_working: idx.working !== -1 ? String(row[idx.working] ?? '') : '',
             transportation: idx.transport !== -1 ? String(row[idx.transport] ?? '') : '',
             status: "not_handled",
-            notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : '',
-            sheet_row_id: `${tab.name}_${phoneRaw}_${Date.now()}`
+            notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : ''
           };
           
-          // שדות נוספים למנהל סחר בלבד
           if (tab.name === "manager_commerce") {
             candidateData.commerce_experience = idx.commerceExp !== -1 ? String(row[idx.commerceExp] ?? '') : '';
             candidateData.comax_proficiency = idx.comax !== -1 ? String(row[idx.comax] ?? '') : '';
@@ -233,40 +187,14 @@ export default function Recruitment() {
 
           toCreate.push(candidateData);
         }
-
-        // סנכרון מחיקות - רק לסגן באר יעקב
-        if (tab.name === "segan_beer_yaakov") {
-          // מצא מועמדים שקיימים באפליקציה אבל לא בגיליון
-          for (const candidate of existing) {
-            if (candidate.position === "segan_beer_yaakov" && !sheetPhones.has(candidate.phone)) {
-              toDelete.push(candidate.id);
-            }
-          }
-        }
-
-        debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים`);
       }
 
-            console.log("=== דוח ייבוא ===");
-            debugInfo.forEach(line => console.log(line));
-            console.log(`סה"כ להוספה: ${toCreate.length}`);
-
-      // מחיקת מועמדים שנמחקו מהגיליון (סגן באר יעקב בלבד)
-      if (toDelete.length > 0) {
-        console.log(`מוחק ${toDelete.length} מועמדים שנמחקו מגיליון סגן באר יעקב`);
-        for (const id of toDelete) {
-          await base44.entities.Candidate.delete(id);
-        }
-        debugInfo.push(`סגן באר יעקב: נמחקו ${toDelete.length} מועמדים שלא בגיליון`);
-      }
-
-      // ייבוא רק חדשים - בקבוצות של 25 עם השהייה
+      // ייבוא הכל בקבוצות
       if (toCreate.length > 0) {
         const batchSize = 25;
         for (let i = 0; i < toCreate.length; i += batchSize) {
           const batch = toCreate.slice(i, i + batchSize);
           await base44.entities.Candidate.bulkCreate(batch);
-          // השהייה קצרה בין קבוצות למניעת rate limit
           if (i + batchSize < toCreate.length) {
             await new Promise(r => setTimeout(r, 300));
           }
