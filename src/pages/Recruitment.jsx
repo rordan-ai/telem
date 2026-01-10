@@ -169,9 +169,18 @@ export default function Recruitment() {
           // מפתח ייחודי - טלפון + תפקיד
           const key = `${cleaned}_${tab.name}`;
 
-          // דילוג על כפילויות ועל קיימים
-          if (seenKeys.has(key) || existingMap.has(key)) continue;
+          // דילוג על קיימים
+          if (existingMap.has(key)) {
+            skippedExisting++;
+            continue;
+          }
+          // דילוג על כפילויות בגיליון
+          if (seenKeys.has(key)) {
+            skippedDupe++;
+            continue;
+          }
           seenKeys.add(key);
+          addedCount++;
 
           toCreate.push({
             name,
