@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, RefreshCw, Download, Search } from "lucide-react";
+import { Users, Loader2, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CandidateCard from "@/components/CandidateCard";
@@ -147,33 +147,36 @@ export default function Recruitment() {
         };
 
         for (const row of rows.slice(1)) {
-          const name = idx.name !== -1 ? String(row[idx.name] || '').trim() : '';
-          const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] || '').trim() : '';
-          // דרישת סכימה מחייבת שם+טלפון — ללא סיבות נוספות
-          if (!name || !phoneRaw) continue;
-          const cleaned = phoneRaw.replace(/\D/g, '');
-          if (!cleaned) continue;
-          if (existingPhones.has(cleaned)) { duplicates++; continue; }
+          // ייבוא כפי שהוא — ללא בדיקות תקינות, מניעת כפולים רק לפי טלפון אם קיים
+          const name = idx.name !== -1 ? String(row[idx.name] ?? '') : '';
+          const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
+          const cleaned = String(phoneRaw).replace(/\D/g, '');
+
+          if (cleaned && existingPhones.has(cleaned)) {
+            duplicates++;
+            continue;
+          }
 
           newCandidates.push({
             name,
             phone: phoneRaw,
-            email: idx.email !== -1 ? String(row[idx.email] || '') : '',
+            email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
             position: tab.name,
-            branch: idx.branch !== -1 ? String(row[idx.branch] || '') : '',
-            campaign: idx.campaign !== -1 ? String(row[idx.campaign] || '') : '',
-            contact_time: idx.time !== -1 ? String(row[idx.time] || '') : '',
-            city: idx.city !== -1 ? String(row[idx.city] || '') : '',
-            has_experience: idx.exp !== -1 ? String(row[idx.exp] || '') : '',
-            job_title: idx.job !== -1 ? String(row[idx.job] || '') : '',
-            experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] || '') : '',
-            currently_working: idx.working !== -1 ? String(row[idx.working] || '') : '',
-            transportation: idx.transport !== -1 ? String(row[idx.transport] || '') : '',
+            branch: idx.branch !== -1 ? String(row[idx.branch] ?? '') : '',
+            campaign: idx.campaign !== -1 ? String(row[idx.campaign] ?? '') : '',
+            contact_time: idx.time !== -1 ? String(row[idx.time] ?? '') : '',
+            city: idx.city !== -1 ? String(row[idx.city] ?? '') : '',
+            has_experience: idx.exp !== -1 ? String(row[idx.exp] ?? '') : '',
+            job_title: idx.job !== -1 ? String(row[idx.job] ?? '') : '',
+            experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] ?? '') : '',
+            currently_working: idx.working !== -1 ? String(row[idx.working] ?? '') : '',
+            transportation: idx.transport !== -1 ? String(row[idx.transport] ?? '') : '',
             status: "not_handled",
-            notes: idx.notes !== -1 ? String(row[idx.notes] || '') : '',
-            sheet_row_id: `${tab.name}_${cleaned}_${Date.now()}`
+            notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : '',
+            sheet_row_id: `${tab.name}_${cleaned || Date.now()}_${Math.random().toString(36).slice(2,8)}`
           });
-          existingPhones.add(cleaned);
+
+          if (cleaned) existingPhones.add(cleaned);
         }
       }
 
@@ -285,7 +288,7 @@ export default function Recruitment() {
             </motion.div>
           }
 
-          {importReport && <ImportReport report={importReport} />}
+
         </div>
 
         {/* Stats */}
