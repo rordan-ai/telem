@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, RefreshCw, Download } from "lucide-react";
+import { Users, Loader2, RefreshCw, Download, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
 
@@ -13,6 +14,7 @@ export default function Recruitment() {
   const [activePosition, setActivePosition] = useState("general");
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
   const { data: candidates = [], isLoading } = useQuery({
@@ -20,9 +22,13 @@ export default function Recruitment() {
     queryFn: () => base44.entities.Candidate.list("-created_date")
   });
 
-  const filteredCandidates = candidates.filter(
-    (c) => c.position === activePosition
-  );
+  const filteredCandidates = candidates.filter((c) => {
+    const matchesPosition = c.position === activePosition;
+    const matchesSearch =
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone.includes(searchQuery);
+    return matchesPosition && matchesSearch;
+  });
 
 
 
@@ -74,6 +80,7 @@ export default function Recruitment() {
       const existingCandidates = await base44.entities.Candidate.list();
       const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
+      let totalDuplicates = 0;
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -164,6 +171,7 @@ export default function Recruitment() {
             
             if (existingPhones.has(cleanPhone)) {
                duplicateCount++;
+               totalDuplicates++;
                continue;
             }
 
@@ -208,7 +216,7 @@ export default function Recruitment() {
         return `${t.sheetName}: ${count}`;
       }).join(" | ");
       
-      setImportMessage(`תהליך הסתיים: נוספו ${newCandidates.length} מועמדים. (${stats})`);
+      setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים שנמצאו. (${stats})`);
       setTimeout(() => setImportMessage(null), 10000);
 
     } catch (error) {
@@ -263,6 +271,16 @@ export default function Recruitment() {
           <PositionTabs
             activePosition={activePosition}
             onPositionChange={setActivePosition} />
+
+          <div className="relative mt-4">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="חיפוש לפי שם או טלפון..."
+              className="bg-slate-800 border-slate-700 text-slate-50 placeholder:text-slate-500 pr-10" 
+            />
+          </div>
 
         </div>
       </header>
