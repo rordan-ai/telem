@@ -110,8 +110,9 @@ export default function Recruitment() {
             continue;
           }
 
-          // Dynamic header mapping
-          const headers = rows[0].map(h => h.toLowerCase().trim());
+          // Extract headers from first row
+          const firstRow = data[0];
+          const headers = Object.keys(firstRow).map(h => h.toLowerCase().trim());
           console.log(`Tab ${tab.name} headers:`, headers);
           
           // Improved getIndex: prioritizes exact/specific matches in the order of possibleNames
@@ -126,7 +127,7 @@ export default function Recruitment() {
           const idx = {
             name: getIndex(["שם מועמד", "שם מלא", "שם"]),
             phone: getIndex(["טלפון", "נייד", "סלולרי"]),
-            email: getIndex(["אימייל", "דואר"]),
+            email: getIndex(["אימייל", "דואר", "מייל"]),
             branch: getIndex(["מודעה", "סניף"]),
             campaign: getIndex(["קמפיין"]),
             time: getIndex(["תאריך", "שעה"]),
@@ -146,27 +147,21 @@ export default function Recruitment() {
             continue;
           }
 
-          let skippedCount = 0;
           let duplicateCount = 0;
           let invalidPhoneCount = 0;
-          let missingDataCount = 0;
 
-          for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            // Safe access to columns
-            const name = row[idx.name];
-            const phone = row[idx.phone];
+          for (const row of data) {
+            const rowValues = Object.values(row);
+            const name = rowValues[idx.name];
+            const phone = rowValues[idx.phone];
             
             if (!name || !phone) {
-              missingDataCount++;
-              if (i < 5) console.log(`Row ${i} missing data: name="${name}", phone="${phone}"`);
               continue;
             }
 
             const cleanPhone = phone.replace(/\D/g, "");
             if (!cleanPhone || cleanPhone.length < 9) {
                invalidPhoneCount++;
-               if (i < 5) console.log(`Row ${i} invalid phone: "${phone}" -> "${cleanPhone}"`);
                continue;
             }
             
@@ -176,24 +171,22 @@ export default function Recruitment() {
                continue;
             }
 
-            // Handle notes: combine regular notes + extra columns if they look like notes or just the main note
-            // Sometimes sheets have multiple note columns, but we'll stick to the found one for now
-            const notes = idx.notes !== -1 ? row[idx.notes] : "";
+            const notes = idx.notes !== -1 ? rowValues[idx.notes] : "";
 
             newCandidates.push({
               name,
               phone,
-              email: idx.email !== -1 ? row[idx.email] : "",
+              email: idx.email !== -1 ? rowValues[idx.email] : "",
               position: tab.name,
-              branch: idx.branch !== -1 ? row[idx.branch] : "",
-              campaign: idx.campaign !== -1 ? row[idx.campaign] : "",
-              contact_time: idx.time !== -1 ? row[idx.time] : "",
-              city: idx.city !== -1 ? row[idx.city] : "",
-              has_experience: idx.exp !== -1 ? row[idx.exp] : "",
-              job_title: idx.job !== -1 ? row[idx.job] : "",
-              experience_description: idx.expDesc !== -1 ? row[idx.expDesc] : "",
-              currently_working: idx.working !== -1 ? row[idx.working] : "",
-              transportation: idx.transport !== -1 ? row[idx.transport] : "",
+              branch: idx.branch !== -1 ? rowValues[idx.branch] : "",
+              campaign: idx.campaign !== -1 ? rowValues[idx.campaign] : "",
+              contact_time: idx.time !== -1 ? rowValues[idx.time] : "",
+              city: idx.city !== -1 ? rowValues[idx.city] : "",
+              has_experience: idx.exp !== -1 ? rowValues[idx.exp] : "",
+              job_title: idx.job !== -1 ? rowValues[idx.job] : "",
+              experience_description: idx.expDesc !== -1 ? rowValues[idx.expDesc] : "",
+              currently_working: idx.working !== -1 ? rowValues[idx.working] : "",
+              transportation: idx.transport !== -1 ? rowValues[idx.transport] : "",
               status: "not_handled",
               notes,
               sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
