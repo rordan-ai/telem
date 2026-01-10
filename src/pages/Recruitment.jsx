@@ -24,49 +24,7 @@ export default function Recruitment() {
     (c) => c.position === activePosition
   );
 
-  // Helper to parse full CSV with multiline support
-  const parseCSV = (csvText) => {
-    const rows = [];
-    let currentRow = [];
-    let currentCell = "";
-    let inQuotes = false;
 
-    for (let i = 0; i < csvText.length; i++) {
-      const char = csvText[i];
-
-      if (char === '"') {
-        if (inQuotes && csvText[i + 1] === '"') {
-          currentCell += '"';
-          i++; // Skip escaped quote
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        currentRow.push(currentCell.trim());
-        currentCell = "";
-      } else if ((char === '\n' || char === '\r') && !inQuotes) {
-        if (char === '\r' && csvText[i + 1] === '\n') {
-          i++; // Skip \r\n
-        }
-        currentRow.push(currentCell.trim());
-        if (currentRow.some((cell) => cell)) {// Only add non-empty rows
-          rows.push(currentRow);
-        }
-        currentRow = [];
-        currentCell = "";
-      } else {
-        currentCell += char;
-      }
-    }
-
-    // Handle last cell/row
-    currentRow.push(currentCell.trim());
-    if (currentRow.some((cell) => cell)) {
-      rows.push(currentRow);
-    }
-
-    return rows;
-  };
 
   const fetchAndImport = async () => {
     setIsImporting(true);
@@ -76,105 +34,75 @@ export default function Recruitment() {
       const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
-      // Fetch all 4 tabs - try using sheet names instead of gids
       const tabs = [
-      { name: "general", sheetName: "עובדים כללי", gid: "0" },
-      { name: "segan_tzoran", sheetName: "סגן צורן", gid: "637665307" },
-      { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב", gid: "691974204" },
-      { name: "manager_commerce", sheetName: "מנהל סחר", gid: "668402077" }];
-
+        { name: "general", sheetName: "עובדים כללי" },
+        { name: "segan_tzoran", sheetName: "סגן צורן" },
+        { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
+        { name: "manager_commerce", sheetName: "מנהל סחר" }
+      ];
 
       for (const tab of tabs) {
-        let csvText = null;
-
-        // Try both gid and sheet name methods
-        const attempts = [
-          `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`,
-          `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab.sheetName)}`
-        ];
-
-        for (const url of attempts) {
-          try {
-            console.log(`Trying to fetch ${tab.name} from: ${url}`);
-            const response = await fetch(url);
-            csvText = await response.text();
-            console.log(`${tab.name}: Got ${csvText.length} chars`);
-            
-            // Check if we got unique data (not the default sheet)
-            if (csvText && csvText.length > 100) {
-              break;
-            }
-          } catch (error) {
-            console.error(`Error with ${url}:`, error);
-            continue;
-          }
-        }
-
-        if (!csvText || csvText.length < 10) continue;
-
         try {
-          const rows = parseCSV(csvText);
-          if (rows.length < 2) continue;
+          const url = `https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(tab.sheetName)}`;
+          console.log(`Fetching ${tab.name} from: ${url}`);
+          const response = await fetch(url);
+          if (!response.ok) continue;
+          
+          const data = await response.json();
+          if (!Array.isArray(data)) continue;
 
-          const headers = rows[0].map((h) => h.replace(/"/g, "").toLowerCase());
-          const timeIndex = 0; // תאריך ושעה
-          const branchIndex = 1; // מודעה
-          const campaignIndex = 2; // שם הקמפיין
-          const nameIndex = 3; // שם מועמד
-          const phoneIndex = 4; // טלפון
-          const emailIndex = 5; // אימייל
-          const cityIndex = 6; // ישוב מגורים
-          const hasExperienceIndex = 7; // האם יש ניסיון
-          const jobTitleIndex = 8; // מועמד למשרה
-          const experienceDescIndex = 9; // תאור קצר ניסיון
-          const currentlyWorkingIndex = 10; // עובד כרגע?
-          const transportationIndex = 11; // רכב/ניידות
-          const notesIndex = 12; // הערות
-          const notesIndex2 = 13; // הערות נוסף
+          console.log(`${tab.name}: Got ${data.length} rows`);
 
-          for (let i = 1; i < rows.length; i++) {
-          const values = rows[i];
-          const name = values[nameIndex]?.replace(/"/g, "").trim();
-          let phone = values[phoneIndex]?.replace(/"/g, "").trim();
-          const email = values[emailIndex]?.replace(/"/g, "").trim();
+          for (const row of data) {
+            // Helper to find value by possible keys
+            const getValue = (keys) => {
+              for (const key of keys) {
+                if (row[key] !== undefined) return row[key];
+              }
+              return "";
+            };
 
-          if (!name || !phone) {
-            continue;
-          }
+            const name = getValue(["שם מועמד", "שם ", "שם"]).trim();
+            const phone = getValue(["טלפון", "נייד"]).trim();
+            
+            if (!name || !phone) continue;
 
-          const cleanPhone = phone.replace(/\D/g, "");
-          if (!cleanPhone || cleanPhone.length < 9) {
-            continue;
-          }
-          if (existingPhones.has(cleanPhone)) {
-            continue;
-          }
+            const cleanPhone = phone.replace(/\D/g, "");
+            if (!cleanPhone || cleanPhone.length < 9) continue;
+            if (existingPhones.has(cleanPhone)) continue;
 
-          // Combine notes from both columns
-          const note1 = values[notesIndex]?.trim().replace(/"/g, "") || "";
-          const note2 = values[notesIndex2]?.trim().replace(/"/g, "") || "";
-          const combinedNotes = [note1, note2].filter(n => n).join(" | ");
+            const email = getValue(["אימייל", "דואר אלקטרוני"]).trim();
+            const branch = getValue(["מודעה", " מועמדות לסניף"]).trim();
+            const campaign = getValue(["שם הקמפיין"]).trim();
+            const contactTime = getValue(["תאריך ושעה"]).trim();
+            const city = getValue(["ישוב מגורים", "מגורים", "עיר"]).trim();
+            const hasExperience = getValue(["האם יש ניסיון ", "ניסיון"]).trim();
+            const jobTitle = getValue(["מועמד למשרה"]).trim();
+            const experienceDesc = getValue(["תאור קצר ניסיון", "תאור קצר"]).trim();
+            const currentlyWorking = getValue(["עובד כרגע?"]).trim();
+            const transportation = getValue(["רכב/ניידות ", "רכב ", "מרחק"]).trim();
+            const notes = getValue(["הערות ", "הערות", "הערות נוסף"]).trim();
 
-          newCandidates.push({
-            name,
-            phone,
-            email: email || "",
-            position: tab.name,
-            branch: values[branchIndex]?.trim().replace(/"/g, "") || "",
-            campaign: values[campaignIndex]?.trim().replace(/"/g, "") || "",
-            contact_time: values[timeIndex]?.trim().replace(/"/g, "") || "",
-            city: values[cityIndex]?.trim().replace(/"/g, "") || "",
-            has_experience: values[hasExperienceIndex]?.trim().replace(/"/g, "") || "",
-            job_title: values[jobTitleIndex]?.trim().replace(/"/g, "") || "",
-            experience_description: values[experienceDescIndex]?.trim().replace(/"/g, "") || "",
-            currently_working: values[currentlyWorkingIndex]?.trim().replace(/"/g, "") || "",
-            transportation: values[transportationIndex]?.trim().replace(/"/g, "") || "",
-            status: "not_handled",
-            notes: combinedNotes,
-            sheet_row_id: `${tab.name}_row_${i}`
-          });
+            newCandidates.push({
+              name,
+              phone,
+              email,
+              position: tab.name,
+              branch,
+              campaign,
+              contact_time: contactTime,
+              city,
+              has_experience: hasExperience,
+              job_title: jobTitle,
+              experience_description: experienceDesc,
+              currently_working: currentlyWorking,
+              transportation,
+              status: "not_handled",
+              notes,
+              sheet_row_id: `${tab.name}_${cleanPhone}`
+            });
 
-          existingPhones.add(cleanPhone);
+            existingPhones.add(cleanPhone);
           }
         } catch (tabError) {
           console.error(`Error fetching ${tab.name} tab:`, tabError);
@@ -192,104 +120,13 @@ export default function Recruitment() {
       }
     } catch (error) {
       console.error("Import error:", error);
+      setImportMessage("שגיאה ביבוא נתונים");
     }
 
     setIsImporting(false);
   };
 
-  const fetchAndImportWithAI = async () => {
-    setIsImporting(true);
-    setImportMessage("מפעיל סוכן בינה מלאכותית לקריאת הגיליון... (זה עשוי לקחת דקה)");
 
-    try {
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `
-          Go to the Google Sheet at https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit
-          There are 4 tabs (sheets) with the following names:
-          1. "עובדים כללי" (General)
-          2. "סגן צורן" (Segan Tzoran)
-          3. "סגן באר יעקב" (Segan Beer Yaakov)
-          4. "מנהל סחר" (Manager Commerce)
-
-          Please extract ALL rows from ALL 4 tabs.
-          For each row, extract: Name, Phone, Email, City, Experience, Job Title, Notes, etc.
-          
-          Map the tab/sheet source to the "position" field as follows:
-          - "עובדים כללי" -> "general"
-          - "סגן צורן" -> "segan_tzoran"
-          - "סגן באר יעקב" -> "segan_beer_yaakov"
-          - "מנהל סחר" -> "manager_commerce"
-          
-          Return a JSON object with a "candidates" array.
-        `,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            candidates: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  phone: { type: "string" },
-                  email: { type: "string" },
-                  position: { type: "string" },
-                  branch: { type: "string" },
-                  campaign: { type: "string" },
-                  contact_time: { type: "string" },
-                  city: { type: "string" },
-                  has_experience: { type: "string" },
-                  job_title: { type: "string" },
-                  experience_description: { type: "string" },
-                  currently_working: { type: "string" },
-                  transportation: { type: "string" },
-                  notes: { type: "string" }
-                }
-              }
-            }
-          }
-        }
-      });
-
-      if (response && response.candidates && Array.isArray(response.candidates)) {
-        const existingCandidates = await base44.entities.Candidate.list();
-        const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
-        const newCandidates = [];
-
-        for (const candidate of response.candidates) {
-          if (!candidate.name || !candidate.phone) continue;
-          
-          const cleanPhone = candidate.phone.replace(/\D/g, "");
-          if (cleanPhone.length < 9 || existingPhones.has(cleanPhone)) continue;
-
-          newCandidates.push({
-            ...candidate,
-            status: "not_handled",
-            sheet_row_id: `ai_import_${Date.now()}_${cleanPhone}`
-          });
-          existingPhones.add(cleanPhone);
-        }
-
-        if (newCandidates.length > 0) {
-          await base44.entities.Candidate.bulkCreate(newCandidates);
-          setImportMessage(`ה-AI מצא וייבא ${newCandidates.length} מועמדים חדשים`);
-          queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        } else {
-          setImportMessage("ה-AI סרק את הגיליון אך לא נמצאו מועמדים חדשים");
-        }
-      } else {
-        console.error("AI Response invalid:", response);
-        setImportMessage("שגיאה בפענוח תשובת ה-AI");
-      }
-    } catch (error) {
-      console.error("AI Import error:", error);
-      setImportMessage("שגיאה ביבוא עם AI");
-    }
-    
-    setTimeout(() => setImportMessage(null), 5000);
-    setIsImporting(false);
-  };
 
   // Auto-import on load and every 5 minutes
   useEffect(() => {
@@ -341,21 +178,23 @@ export default function Recruitment() {
       <main className="bg-slate-500 mx-auto px-4 py-6 max-w-lg">
         {/* Import button and status */}
         <div className="mb-4 space-y-3">
-          <div className="flex gap-2">
-            <Button
-              onClick={fetchAndImport}
-              disabled={isImporting} className="flex-1 bg-slate-300 text-slate-900 px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow h-9 hover:bg-slate-400">
-              {isImporting ? <RefreshCw className="w-4 h-4 ml-2 animate-spin" /> : <RefreshCw className="w-4 h-4 ml-2" />}
-              {isImporting ? "מייבא..." : "רענון רגיל"}
-            </Button>
-            
-            <Button
-              onClick={fetchAndImportWithAI}
-              disabled={isImporting} className="flex-1 bg-indigo-600 text-white px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow h-9 hover:bg-indigo-700">
-              <span className="text-xs">✨</span>
-              יבוא עם AI
-            </Button>
-          </div>
+          <Button
+            onClick={fetchAndImport}
+            disabled={isImporting} className="bg-slate-300 text-slate-900 px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 w-full hover:bg-blue-700">
+
+
+            {isImporting ?
+            <>
+                <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                מייבא מהגיליון...
+              </> :
+
+            <>
+                <RefreshCw className="w-4 h-4 ml-2" />
+                רענון נתונים
+              </>
+            }
+          </Button>
           
           {importMessage &&
           <motion.div
