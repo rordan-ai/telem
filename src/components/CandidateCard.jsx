@@ -173,12 +173,9 @@ export default function CandidateCard({ candidate, onUpdate }) {
             className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors py-2">
 
               <span>פרטים נוספים</span>
-              <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}>
-
+              <div style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
                 <ChevronDown className="w-4 h-4" />
-              </motion.div>
+              </div>
             </button>
 
             <motion.div
