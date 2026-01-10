@@ -147,7 +147,12 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
         {/* Notes - Always Visible */}
         {notes &&
-        <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+        <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-xl relative">
+            <div className="absolute top-2 left-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
             <p className="text-sm text-slate-700 whitespace-pre-wrap">{notes}</p>
           </div>
         }
