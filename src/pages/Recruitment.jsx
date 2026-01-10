@@ -84,6 +84,8 @@ export default function Recruitment() {
         { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
         { name: "manager_commerce", sheetName: "מנהל סחר" }
       ];
+      
+      console.log("Starting import from sheets...");
 
       const newCandidates = [];
 
