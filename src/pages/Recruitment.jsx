@@ -60,7 +60,7 @@ export default function Recruitment() {
         cell = "";
       } else if (char === '\n' && !insideQuote) {
         row.push(cell.trim());
-        if (row.some(c => c)) rows.push(row);
+        rows.push(row);
         row = [];
         cell = "";
       } else {
@@ -70,7 +70,7 @@ export default function Recruitment() {
     
     // Add the last row if it exists
     row.push(cell.trim());
-    if (row.some(c => c)) rows.push(row);
+    rows.push(row);
     
     return rows;
   };
