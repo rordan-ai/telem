@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
+import ImportReport from "../components/ImportReport";
 
 const SHEET_ID = "12MZERyehuXxMUix9LYQSpdjespJ2bpDx1nyQYG-M4N4";
 
@@ -15,6 +16,7 @@ export default function Recruitment() {
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [importReport, setImportReport] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: candidates = [], isLoading } = useQuery({
@@ -77,6 +79,21 @@ export default function Recruitment() {
     setIsImporting(true);
 
     try {
+      const report = {
+        tabs: [],
+        total: {
+          imported: 0,
+          skipped: 0,
+          reasons: {
+            duplicate: 0,
+            missing_required: 0,
+            invalid_phone: 0,
+            missing_required_columns: 0,
+            fetch_failed: 0,
+            no_data_rows: 0
+          }
+        }
+      };
       const existingCandidates = await base44.entities.Candidate.list();
       const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
@@ -90,6 +107,21 @@ export default function Recruitment() {
       ];
 
       for (const tab of tabs) {
+        const tabReport = {
+          name: tab.name,
+          sheetName: tab.sheetName,
+          fetchedRows: 0,
+          imported: 0,
+          skipped: 0,
+          reasons: {
+            duplicate: 0,
+            missing_required: 0,
+            invalid_phone: 0,
+            missing_required_columns: 0,
+            fetch_failed: 0,
+            no_data_rows: 0
+          }
+        };
         try {
           // Fetch via Google Sheets CSV (more reliable and CORS-friendly)
           const sheetNameEncoded = encodeURIComponent(tab.sheetName);
@@ -99,6 +131,8 @@ export default function Recruitment() {
           const response = await fetch(url);
           if (!response.ok) {
             console.error(`Failed to fetch ${tab.name}:`, response.status);
+            tabReport.reasons.fetch_failed += 1;
+            report.tabs.push(tabReport);
             continue;
           }
 
@@ -108,8 +142,12 @@ export default function Recruitment() {
           const rows = parseCSV(csvText);
           console.log(`Tab ${tab.name}: parsed ${rows.length} rows`);
 
+          tabReport.fetchedRows = Math.max(0, rows.length - 1);
+
           if (!rows || rows.length < 2) {
             console.warn(`Tab ${tab.name}: No data rows returned`);
+            tabReport.reasons.no_data_rows += 1;
+            report.tabs.push(tabReport);
             continue;
           }
 
@@ -150,6 +188,9 @@ export default function Recruitment() {
 
           if (idx.name === -1 || idx.phone === -1) {
             console.error(`Missing required columns in ${tab.name}. Name index: ${idx.name}, Phone index: ${idx.phone}`);
+            tabReport.reasons.missing_required_columns += tabReport.fetchedRows;
+            tabReport.skipped += tabReport.fetchedRows;
+            report.tabs.push(tabReport);
             continue;
           }
 
@@ -158,17 +199,27 @@ export default function Recruitment() {
           for (const row of rows.slice(1)) {
             const name = row[idx.name];
             const phone = row[idx.phone];
-            
+
             // Only skip if name or phone is missing - these are required fields
-            if (!name || !phone) continue;
+            if (!name || !phone) {
+              tabReport.reasons.missing_required += 1;
+              tabReport.skipped += 1;
+              continue;
+            }
 
             const cleanPhone = String(phone).replace(/\D/g, "");
             // Only skip if phone is invalid format
-            if (!cleanPhone || cleanPhone.length < 9) continue;
-            
+            if (!cleanPhone || cleanPhone.length < 9) {
+              tabReport.reasons.invalid_phone += 1;
+              tabReport.skipped += 1;
+              continue;
+            }
+
             if (existingPhones.has(cleanPhone)) {
                duplicateCount++;
                totalDuplicates++;
+               tabReport.reasons.duplicate += 1;
+               tabReport.skipped += 1;
                continue;
             }
 
@@ -191,10 +242,24 @@ export default function Recruitment() {
               sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
             });
 
+            tabReport.imported += 1;
             existingPhones.add(cleanPhone);
           }
+
+          report.tabs.push(tabReport);
         } catch (tabError) {
           console.error(`Error fetching ${tab.name} tab:`, tabError);
+          // Count as fetch failure if we didn't already push
+          // Push minimal info so the report shows the tab
+          const minimal = {
+            name: tab.name,
+            sheetName: tab.sheetName,
+            fetchedRows: 0,
+            imported: 0,
+            skipped: 0,
+            reasons: { duplicate: 0, missing_required: 0, invalid_phone: 0, missing_required_columns: 0, fetch_failed: 1, no_data_rows: 0 }
+          };
+          report.tabs.push(minimal);
         }
       }
 
@@ -203,6 +268,17 @@ export default function Recruitment() {
         await base44.entities.Candidate.bulkCreate(newCandidates);
       }
 
+      // Build totals for the report
+      report.total.imported = report.tabs.reduce((sum, t) => sum + (t.imported || 0), 0);
+      report.total.skipped = report.tabs.reduce((sum, t) => sum + (t.skipped || 0), 0);
+      // Sum reasons
+      for (const t of report.tabs) {
+        for (const key of Object.keys(report.total.reasons)) {
+          report.total.reasons[key] += t.reasons?.[key] || 0;
+        }
+      }
+      setImportReport(report);
+
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
 
       // Generate detailed report
@@ -210,17 +286,19 @@ export default function Recruitment() {
         const count = newCandidates.filter(c => c.position === t.name).length;
         return `${t.sheetName}: ${count}`;
       }).join(" | ");
-      
+
       setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים. (${stats})`);
       setTimeout(() => setImportMessage(null), 10000);
 
     } catch (error) {
       console.error("Import error:", error);
       setImportMessage("שגיאה ביבוא נתונים: " + error.message);
+      // expose minimal report even on total failure
+      setImportReport({ tabs: [], total: { imported: 0, skipped: 0, reasons: { duplicate: 0, missing_required: 0, invalid_phone: 0, missing_required_columns: 0, fetch_failed: 1, no_data_rows: 0 } } });
     }
 
     setIsImporting(false);
-  };
+    };
 
 
 
@@ -315,6 +393,8 @@ export default function Recruitment() {
               </div>
             </motion.div>
           }
+
+          {importReport && <ImportReport report={importReport} />}
         </div>
 
         {/* Stats */}
