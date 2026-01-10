@@ -95,13 +95,27 @@ export default function Recruitment() {
           for (let i = 1; i < lines.length; i++) {
             const values = parseCSVLine(lines[i]);
             const name = values[nameIndex]?.trim().replace(/"/g, "");
-            const phone = values[phoneIndex]?.trim().replace(/"/g, "");
+            let phone = values[phoneIndex]?.trim().replace(/"/g, "");
 
-            if (!name || !phone) continue;
+            console.log(`${tab.name} row ${i}:`, { name, phone, rawPhone: values[phoneIndex], allValues: values });
+
+            if (!name || !phone) {
+              console.log(`Skipping - name: ${name}, phone: ${phone}`);
+              continue;
+            }
 
             const cleanPhone = phone.replace(/\D/g, "");
-            if (!cleanPhone || cleanPhone.length < 9) continue;
-            if (existingPhones.has(cleanPhone)) continue;
+            console.log(`cleanPhone: ${cleanPhone}, length: ${cleanPhone.length}`);
+            if (!cleanPhone || cleanPhone.length < 9) {
+              console.log(`Skipping - invalid phone length`);
+              continue;
+            }
+            if (existingPhones.has(cleanPhone)) {
+              console.log(`Skipping - phone exists`);
+              continue;
+            }
+            
+            console.log(`✓ Adding candidate: ${name}`);
 
             newCandidates.push({
               name,
@@ -196,8 +210,8 @@ export default function Recruitment() {
               </>
             ) : (
               <>
-                <Download className="w-4 h-4 ml-2" />
-                ייבוא מגוגל שיטס
+                <RefreshCw className="w-4 h-4 ml-2" />
+                רענון נתונים
               </>
             )}
           </Button>
@@ -242,7 +256,7 @@ export default function Recruitment() {
             </div>
             <p className="text-slate-500 font-medium">אין מועמדים ל{positionLabel}</p>
             <p className="text-slate-400 text-sm mt-1">
-              לחץ על "ייבוא מגוגל שיטס" להוספת מועמדים
+              לחץ על "רענון נתונים" להוספת מועמדים
             </p>
           </motion.div>
         ) : (
