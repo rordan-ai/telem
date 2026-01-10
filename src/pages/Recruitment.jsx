@@ -145,6 +145,10 @@ export default function Recruitment() {
           return -1;
         };
         const nameIdx = (() => {
+          // בסגן צורן וסגן באר יעקב - שם המועמד בעמודה B (אינדקס 1)
+          if (tab.name === "segan_tzoran" || tab.name === "segan_beer_yaakov") {
+            return 1;
+          }
           let i = headers.findIndex(h => h === "שם מועמד" || h === "שם מלא");
           if (i !== -1) return i;
           i = headers.findIndex(h => h.includes("מועמד") || h.includes("שם מלא"));
