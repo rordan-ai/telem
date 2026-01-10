@@ -109,7 +109,10 @@ export default function Recruitment() {
           const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
           const cityIndex = headers.findIndex(h => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
           const ageIndex = headers.findIndex(h => h.includes("גיל") || h.includes("age"));
-          const experienceIndex = headers.findIndex(h => h.includes("ניסיון") || h.includes("experience") || h.includes("תאור"));
+          // Column C: "ניסיון?" (yes/no)
+          const hasExperienceIndex = headers.findIndex(h => h === "ניסיון?" || h.includes("ניסיון?"));
+          // Column D: "תאור ניסיון" (experience description)
+          const experienceDescIndex = headers.findIndex(h => h.includes("תאור ניסיון") || h.includes("תאור"));
           const availabilityIndex = headers.findIndex(h => h.includes("זמינות") || h.includes("availability"));
           const notesIndex = headers.findIndex(h => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
 
@@ -147,7 +150,8 @@ export default function Recruitment() {
               contact_time: timeIndex !== -1 ? values[timeIndex]?.trim().replace(/"/g, "") : "",
               city: cityIndex !== -1 ? values[cityIndex]?.trim().replace(/"/g, "") : "",
               age: ageIndex !== -1 ? values[ageIndex]?.trim().replace(/"/g, "") : "",
-              experience: experienceIndex !== -1 ? values[experienceIndex]?.trim().replace(/"/g, "") : "",
+              has_experience: hasExperienceIndex !== -1 ? values[hasExperienceIndex]?.trim().replace(/"/g, "") : "",
+              experience_description: experienceDescIndex !== -1 ? values[experienceDescIndex]?.trim().replace(/"/g, "") : "",
               availability: availabilityIndex !== -1 ? values[availabilityIndex]?.trim().replace(/"/g, "") : "",
               status: "not_handled",
               notes: notesIndex !== -1 ? values[notesIndex]?.trim().replace(/"/g, "") : "",

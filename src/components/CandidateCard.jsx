@@ -162,7 +162,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
         />
 
         {/* Expandable Details */}
-        {(candidate.age || candidate.experience || candidate.availability) && (
+        {(candidate.age || candidate.has_experience || candidate.experience_description || candidate.availability) && (
           <>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
@@ -194,11 +194,18 @@ export default function CandidateCard({ candidate, onUpdate }) {
                     <span className="text-slate-700">{candidate.age}</span>
                   </div>
                 )}
-                {candidate.experience && (
+                {candidate.has_experience && (
                   <div className="flex items-center gap-2 text-sm">
                     <Briefcase className="w-4 h-4 text-slate-400" />
                     <span className="text-slate-500">ניסיון:</span>
-                    <span className="text-slate-700">{candidate.experience}</span>
+                    <span className="text-slate-700">{candidate.has_experience}</span>
+                  </div>
+                )}
+                {candidate.experience_description && (
+                  <div className="flex items-start gap-2 text-sm">
+                    <Briefcase className="w-4 h-4 text-slate-400 mt-0.5" />
+                    <span className="text-slate-500">תאור ניסיון:</span>
+                    <span className="text-slate-700">{candidate.experience_description}</span>
                   </div>
                 )}
                 {candidate.availability && (
