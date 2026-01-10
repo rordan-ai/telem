@@ -155,14 +155,15 @@ export default function Recruitment() {
             const name = rowValues[idx.name];
             const phone = rowValues[idx.phone];
             
+            // Only skip if name or phone is missing - these are required fields
             if (!name || !phone) {
               continue;
             }
 
             const cleanPhone = phone.replace(/\D/g, "");
+            // Only skip if phone is invalid format
             if (!cleanPhone || cleanPhone.length < 9) {
-               invalidPhoneCount++;
-               continue;
+              continue;
             }
             
             if (existingPhones.has(cleanPhone)) {
