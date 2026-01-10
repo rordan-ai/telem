@@ -100,10 +100,16 @@ export default function Recruitment() {
           
           const csvText = await response.text();
           console.log(`Tab ${tab.name}: fetched ${csvText.length} chars`);
-          
+          console.log(`First 500 chars:`, csvText.substring(0, 500));
+
           const rows = parseCSV(csvText);
           console.log(`Tab ${tab.name}: parsed ${rows.length} rows`);
-          
+          console.log(`Row lengths:`, rows.slice(0, 5).map((r, i) => `Row ${i}: ${r.length} cells`));
+
+          // Count non-empty rows
+          const nonEmptyRows = rows.filter(r => r.some(cell => cell.trim()));
+          console.log(`Tab ${tab.name}: ${nonEmptyRows.length} non-empty rows out of ${rows.length}`);
+
           if (rows.length < 2) {
             console.warn(`Tab ${tab.name}: Not enough rows (only ${rows.length})`);
             continue;
