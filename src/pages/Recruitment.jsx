@@ -156,6 +156,9 @@ export default function Recruitment() {
           return headers.findIndex(h => h.startsWith("שם") && !h.includes("קמפיין"));
         })();
 
+        // לגיליון מנהל סחר - אינדקסים קשיחים לפי מבנה הגיליון
+        // A=0: תאיך כניסה, B=1: שם, C=2: ניסיון בסחר, D=3: שליטה בקומקס
+        // E=4: פלנוגרמות, F=5: ניהול מו"מ, G=6: דוח רווח, H=7: זמינות
         const idx = {
           name: nameIdx,
           phone: findIndex(["טלפון", "נייד", "סלולרי"]),
@@ -170,13 +173,13 @@ export default function Recruitment() {
           working: findIndex(["עובד כרגע?", "עובד כרגע"]),
           transport: findIndex(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
           notes: findIndex(["הערות"]),
-          // שדות מנהל סחר בלבד
-          commerceExp: findIndex(["ניסיון בסחר/ניהול קטגוריות של שנה", "ניסיון בסחר"]),
-          comax: findIndex(["שליטה בקומקס"]),
-          planogram: findIndex(["בניית פלנוגרמות ונראות מדף"]),
-          supplierNeg: findIndex(["ניהול מן\" מול ספקים גדולים", "ניהול מו\"מ"]),
-          pnl: findIndex(["ניתוח דוח רווח והפסד ותמחור", "ניתוח דוח רווח"]),
-          availability: findIndex(["זמינות"])
+          // שדות מנהל סחר - אינדקסים קשיחים
+          commerceExp: tab.name === "manager_commerce" ? 2 : -1,
+          comax: tab.name === "manager_commerce" ? 3 : -1,
+          planogram: tab.name === "manager_commerce" ? 4 : -1,
+          supplierNeg: tab.name === "manager_commerce" ? 5 : -1,
+          pnl: tab.name === "manager_commerce" ? 6 : -1,
+          availability: tab.name === "manager_commerce" ? 7 : -1
         };
 
         for (const row of rows.slice(1)) {
