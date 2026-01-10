@@ -52,10 +52,10 @@ export default function Recruitment() {
       const existingPhones = new Set(existingCandidates.map(c => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
-      // Fetch both tabs - try multiple possible sheet names
+      // Fetch both tabs
       const tabs = [
-        { name: "barista", gids: ["0", "1977885789"] },
-        { name: "cook", gids: ["1924313319", "123456789"] }
+        { name: "barista", gids: ["0"] },
+        { name: "cook", gids: ["129025812"] }
       ];
 
       for (const tab of tabs) {
