@@ -205,11 +205,16 @@ export default function Recruitment() {
       }
 
       // Handle deleted candidates - remove those not in the current sheet
-      const sheetsPhones = new Set(newCandidates.map(c => c.phone.replace(/\D/g, "")));
-      const candidatesToDelete = existingCandidates.filter(c => !sheetsPhones.has(c.phone.replace(/\D/g, "")));
+      // Collect all phones from ALL tabs (existing + new)
+      const allSheetsPhones = new Set([
+        ...newCandidates.map(c => c.phone.replace(/\D/g, "")),
+        ...Array.from(existingPhones)
+      ]);
+      const candidatesToDelete = existingCandidates.filter(c => !allSheetsPhones.has(c.phone.replace(/\D/g, "")));
       
-      for (const candidate of candidatesToDelete) {
-        await base44.entities.Candidate.delete(candidate.id);
+      // Delete in parallel for better performance
+      if (candidatesToDelete.length > 0) {
+        await Promise.all(candidatesToDelete.map(c => base44.entities.Candidate.delete(c.id)));
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
