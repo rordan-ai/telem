@@ -201,14 +201,14 @@ export default function CandidateCard({ candidate, onUpdate }) {
                 {candidate.has_experience &&
               <div className="text-slate-50 text-sm flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-50">ניסיון:</span>
+                    <span className="text-slate-50">מועסק לחצי שנה:</span>
                     <span className="text-slate-50">{candidate.has_experience}</span>
                   </div>
               }
                 {candidate.experience_description &&
               <div className="flex items-start gap-2 text-sm">
                     <Briefcase className="w-4 h-4 text-slate-400 mt-0.5" />
-                    <span className="text-slate-50">תאור ניסיון:</span>
+                    <span className="text-slate-50">יכול להתחיל תוך חודש:</span>
                     <span className="text-slate-50">{candidate.experience_description}</span>
                   </div>
               }
