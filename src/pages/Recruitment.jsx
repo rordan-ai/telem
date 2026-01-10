@@ -99,7 +99,8 @@ export default function Recruitment() {
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
+        // Adding range parameter to ensure all rows are fetched
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}&range=A:Z`;
         const res = await fetch(url);
         if (!res.ok) {
           debugInfo.push(`${tab.sheetName}: שגיאת רשת`);
