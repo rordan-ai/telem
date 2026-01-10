@@ -172,10 +172,13 @@ export default function CandidateCard({ candidate, onUpdate }) {
             onClick={() => setIsExpanded(!isExpanded)}
             className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors py-2">
 
-              <span>פרטים נוספים</span>
-              <div style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-                <ChevronDown className="w-4 h-4" />
-              </div>
+              <span className="text-slate-50">פרטים נוספים</span>
+              <motion.div
+              animate={{ rotate: isExpanded ? 180 : 0 }}
+              transition={{ duration: 0.2 }}>
+
+                <ChevronDown className="text-zinc-50 lucide lucide-chevron-down w-4 h-4" />
+              </motion.div>
             </button>
 
             <motion.div
@@ -198,14 +201,14 @@ export default function CandidateCard({ candidate, onUpdate }) {
                 {candidate.has_experience &&
               <div className="text-slate-50 text-sm flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-50">מועסק לחצי שנה:</span>
+                    <span className="text-slate-50">ניסיון:</span>
                     <span className="text-slate-50">{candidate.has_experience}</span>
                   </div>
               }
                 {candidate.experience_description &&
               <div className="flex items-start gap-2 text-sm">
                     <Briefcase className="w-4 h-4 text-slate-400 mt-0.5" />
-                    <span className="text-slate-50">יכול להתחיל תוך חודש:</span>
+                    <span className="text-slate-50">תאור ניסיון:</span>
                     <span className="text-slate-50">{candidate.experience_description}</span>
                   </div>
               }
