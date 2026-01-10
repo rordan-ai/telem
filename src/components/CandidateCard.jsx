@@ -10,13 +10,24 @@ import {
   SelectTrigger,
   SelectValue } from
 "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 
 const statusOptions = [
 { value: "not_handled", label: "לא טופל", color: "bg-slate-100 text-slate-600 border-slate-200" },
 { value: "message_sent", label: "נשלחה הודעה", color: "bg-amber-50 text-amber-700 border-amber-200" },
-{ value: "relevant", label: "רלוונטי", color: "bg-emerald-50 text-emerald-700 border-emerald-200" }];
+{ value: "relevant", label: "רלוונטי", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+{ value: "not_relevant", label: "לא רלוונטי", color: "bg-red-50 text-red-700 border-red-200" }];
 
 
 export default function CandidateCard({ candidate, onUpdate }) {
@@ -24,6 +35,8 @@ export default function CandidateCard({ candidate, onUpdate }) {
   const [status, setStatus] = useState(candidate.status || "not_handled");
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteSource, setDeleteSource] = useState(null); // 'trash' or 'status'
 
   const currentStatus = statusOptions.find((s) => s.value === status);
 
@@ -36,10 +49,21 @@ export default function CandidateCard({ candidate, onUpdate }) {
   };
 
   const handleStatusChange = async (newStatus) => {
+    if (newStatus === "not_relevant") {
+      setDeleteSource('status');
+      setShowDeleteDialog(true);
+      return;
+    }
     setStatus(newStatus);
     setIsSaving(true);
     await base44.entities.Candidate.update(candidate.id, { status: newStatus });
     setIsSaving(false);
+    onUpdate?.();
+  };
+
+  const handleDelete = async () => {
+    await base44.entities.Candidate.delete(candidate.id);
+    setShowDeleteDialog(false);
     onUpdate?.();
   };
 
@@ -74,9 +98,9 @@ export default function CandidateCard({ candidate, onUpdate }) {
         {/* Header Row */}
         <div className="flex items-center justify-between gap-3 mb-3">
           <button
-            onClick={async () => {
-              await base44.entities.Candidate.delete(candidate.id);
-              onUpdate?.();
+            onClick={() => {
+              setDeleteSource('trash');
+              setShowDeleteDialog(true);
             }}
             className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center transition-colors"
             title="מחק מועמד">
@@ -145,7 +169,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
               {statusOptions.map((option) =>
               <SelectItem key={option.value} value={option.value}>
                   <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${option.value === 'not_handled' ? 'bg-slate-400' : option.value === 'message_sent' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                    <span className={`w-2 h-2 rounded-full ${option.value === 'not_handled' ? 'bg-slate-400' : option.value === 'message_sent' ? 'bg-amber-500' : option.value === 'relevant' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                     {option.label}
                   </span>
                 </SelectItem>
@@ -238,6 +262,23 @@ export default function CandidateCard({ candidate, onUpdate }) {
         <div className="text-xs text-slate-400 mt-2 text-center">שומר...</div>
         }
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>האם למחוק?</AlertDialogTitle>
+            <AlertDialogDescription className="text-red-600 font-medium">
+              האם הנך בטוח במחיקה?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel>לא</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              כן
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>);
 
 }
