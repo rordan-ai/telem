@@ -79,9 +79,15 @@ export default function Recruitment() {
     setIsImporting(true);
     try {
       const existing = await base44.entities.Candidate.list();
-      const existingPhones = new Set(
-        (existing || []).map(c => String(c.phone || '').replace(/\D/g, ''))
-      );
+      
+      // בניית מפה של טלפונים קיימים לפי תפקיד
+      const existingByPosition = {};
+      for (const c of existing || []) {
+        const pos = c.position;
+        if (!existingByPosition[pos]) existingByPosition[pos] = new Set();
+        const phone = String(c.phone || '').replace(/\D/g, '');
+        if (phone) existingByPosition[pos].add(phone);
+      }
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -94,6 +100,9 @@ export default function Recruitment() {
       let duplicates = 0;
 
       for (const tab of tabs) {
+        // סט טלפונים לתפקיד הנוכחי בלבד
+        const positionPhones = existingByPosition[tab.name] || new Set();
+        
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
         const res = await fetch(url);
@@ -147,12 +156,12 @@ export default function Recruitment() {
         };
 
         for (const row of rows.slice(1)) {
-          // ייבוא כפי שהוא — ללא בדיקות תקינות, מניעת כפולים רק לפי טלפון אם קיים
           const name = idx.name !== -1 ? String(row[idx.name] ?? '') : '';
           const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
           const cleaned = String(phoneRaw).replace(/\D/g, '');
 
-          if (cleaned && existingPhones.has(cleaned)) {
+          // כפילות רק בתוך אותו תפקיד
+          if (cleaned && positionPhones.has(cleaned)) {
             duplicates++;
             continue;
           }
@@ -176,7 +185,7 @@ export default function Recruitment() {
             sheet_row_id: `${tab.name}_${cleaned || Date.now()}_${Math.random().toString(36).slice(2,8)}`
           });
 
-          if (cleaned) existingPhones.add(cleaned);
+          if (cleaned) positionPhones.add(cleaned);
         }
       }
 
