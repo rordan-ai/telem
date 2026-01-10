@@ -113,7 +113,8 @@ export default function Recruitment() {
             continue;
           }
 
-          const headers = rows[0].map(h => String(h).trim());
+          const normalizeHeader = (t) => String(t || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+          const headers = rows[0].map(normalizeHeader);
           console.log(`Tab ${tab.name} headers:`, headers);
 
           // Prefer exact Hebrew header matches first, then fallback to contains
