@@ -78,11 +78,13 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // מחיקת כל המועמדים הקיימים במכה אחת
+      // שליפת מועמדים קיימים - ניצור מפה לפי טלפון+תפקיד
       const existing = await base44.entities.Candidate.list();
-      if (existing.length > 0) {
-        await Promise.all(existing.map(c => base44.entities.Candidate.delete(c.id)));
-      }
+      const existingMap = new Map();
+      existing.forEach(c => {
+        const key = `${c.phone?.replace(/\D/g, '')}_${c.position}`;
+        existingMap.set(key, c);
+      });
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -91,10 +93,10 @@ export default function Recruitment() {
         { name: "manager_commerce", sheetName: "מנהל סחר" }
       ];
 
-      const newCandidates = [];
+      const toCreate = [];
+      const seenKeys = new Set();
 
       for (const tab of tabs) {
-        
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
         const res = await fetch(url);
@@ -152,9 +154,14 @@ export default function Recruitment() {
           const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
           const cleaned = String(phoneRaw).replace(/\D/g, '');
 
-          // ללא סינון - מייבא הכל
+          // מפתח ייחודי - טלפון + תפקיד
+          const key = `${cleaned}_${tab.name}`;
 
-          newCandidates.push({
+          // דילוג על כפילויות ועל קיימים
+          if (seenKeys.has(key) || existingMap.has(key)) continue;
+          seenKeys.add(key);
+
+          toCreate.push({
             name,
             phone: phoneRaw,
             email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
@@ -170,21 +177,29 @@ export default function Recruitment() {
             transportation: idx.transport !== -1 ? String(row[idx.transport] ?? '') : '',
             status: "not_handled",
             notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : '',
-            sheet_row_id: `${tab.name}_${cleaned || Date.now()}_${Math.random().toString(36).slice(2,8)}`
+            sheet_row_id: `${tab.name}_${cleaned}_${Date.now()}`
           });
-
         }
       }
 
-      // ייבוא בקבוצות של 50 למניעת שגיאות
-      const batchSize = 50;
-      for (let i = 0; i < newCandidates.length; i += batchSize) {
-        const batch = newCandidates.slice(i, i + batchSize);
-        await base44.entities.Candidate.bulkCreate(batch);
+      // ייבוא רק חדשים - בקבוצות של 25 עם השהייה
+      if (toCreate.length > 0) {
+        const batchSize = 25;
+        for (let i = 0; i < toCreate.length; i += batchSize) {
+          const batch = toCreate.slice(i, i + batchSize);
+          await base44.entities.Candidate.bulkCreate(batch);
+          // השהייה קצרה בין קבוצות למניעת rate limit
+          if (i + batchSize < toCreate.length) {
+            await new Promise(r => setTimeout(r, 300));
+          }
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      setImportMessage(`יובאו ${newCandidates.length} מועמדים בהצלחה`);
+      const msg = toCreate.length > 0 
+        ? `נוספו ${toCreate.length} מועמדים חדשים` 
+        : `הנתונים מעודכנים (${existing.length} מועמדים)`;
+      setImportMessage(msg);
       setTimeout(() => setImportMessage(null), 8000);
     } catch (e) {
       console.error("Import error:", e);
