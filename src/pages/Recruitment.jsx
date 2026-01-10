@@ -233,8 +233,9 @@ export default function Recruitment() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpdate = () => {
-    queryClient.invalidateQueries({ queryKey: ["candidates"] });
+  const handleUpdate = async () => {
+   await fetchAndImport();
+   queryClient.invalidateQueries({ queryKey: ["candidates"] });
   };
 
   const positionLabels = {
