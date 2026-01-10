@@ -101,8 +101,8 @@ export default function Recruitment() {
           const getIndex = (possibleNames) => headers.findIndex(h => possibleNames.some(name => h.includes(name)));
 
           const idx = {
-            name: getIndex(["שם מועמד", "שם"]),
-            phone: getIndex(["טלפון", "נייד"]),
+            name: getIndex(["שם מועמד", "שם", "שם מלא"]),
+            phone: getIndex(["טלפון", "נייד", "סלולרי"]),
             email: getIndex(["אימייל", "דואר"]),
             branch: getIndex(["מודעה", "סניף"]),
             campaign: getIndex(["קמפיין"]),
@@ -121,16 +121,28 @@ export default function Recruitment() {
             continue;
           }
 
+          let skippedCount = 0;
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
+            // Safe access to columns
             const name = row[idx.name];
             const phone = row[idx.phone];
             
-            if (!name || !phone) continue;
+            if (!name || !phone) {
+              skippedCount++;
+              continue;
+            }
 
             const cleanPhone = phone.replace(/\D/g, "");
-            if (!cleanPhone || cleanPhone.length < 9) continue;
-            if (existingPhones.has(cleanPhone)) continue;
+            if (!cleanPhone || cleanPhone.length < 9) {
+               skippedCount++;
+               continue;
+            }
+            
+            if (existingPhones.has(cleanPhone)) {
+               skippedCount++;
+               continue;
+            }
 
             // Handle notes: combine regular notes + extra columns if they look like notes or just the main note
             // Sometimes sheets have multiple note columns, but we'll stick to the found one for now
@@ -164,16 +176,21 @@ export default function Recruitment() {
 
       if (newCandidates.length > 0) {
         await base44.entities.Candidate.bulkCreate(newCandidates);
-        setImportMessage(`נוספו ${newCandidates.length} מועמדים חדשים`);
-        setTimeout(() => setImportMessage(null), 4000);
         queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      } else {
-        setImportMessage("כל המועמדים כבר קיימים במערכת");
-        setTimeout(() => setImportMessage(null), 4000);
       }
+
+      // Generate detailed report
+      const stats = tabs.map(t => {
+        const count = newCandidates.filter(c => c.position === t.name).length;
+        return `${t.sheetName}: ${count}`;
+      }).join(" | ");
+      
+      setImportMessage(`תהליך הסתיים: נוספו ${newCandidates.length} מועמדים. (${stats})`);
+      setTimeout(() => setImportMessage(null), 10000);
+
     } catch (error) {
       console.error("Import error:", error);
-      setImportMessage("שגיאה ביבוא נתונים");
+      setImportMessage("שגיאה ביבוא נתונים: " + error.message);
     }
 
     setIsImporting(false);
