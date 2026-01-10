@@ -262,7 +262,7 @@ export default function Recruitment() {
           <h2 className="font-semibold text-slate-700">
             מועמדים ל{positionLabel}
           </h2>
-          <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+          <span className="bg-slate-900 text-slate-50 px-3 py-1 text-sm rounded-full">
             {filteredCandidates.length} מועמדים
           </span>
         </div>
