@@ -176,15 +176,19 @@ export default function Recruitment() {
         }
       }
 
-      if (newCandidates.length) {
-        await base44.entities.Candidate.bulkCreate(newCandidates);
+      // ייבוא בקבוצות של 50 למניעת שגיאות
+      const batchSize = 50;
+      for (let i = 0; i < newCandidates.length; i += batchSize) {
+        const batch = newCandidates.slice(i, i + batchSize);
+        await base44.entities.Candidate.bulkCreate(batch);
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      setImportMessage(`יובאו ${newCandidates.length} שורות.`);
+      setImportMessage(`יובאו ${newCandidates.length} מועמדים בהצלחה`);
       setTimeout(() => setImportMessage(null), 8000);
     } catch (e) {
-      setImportMessage("שגיאה בייבוא נתונים.");
+      console.error("Import error:", e);
+      setImportMessage(`שגיאה: ${e.message || "בייבוא נתונים"}`);
       setTimeout(() => setImportMessage(null), 8000);
     }
     setIsImporting(false);
