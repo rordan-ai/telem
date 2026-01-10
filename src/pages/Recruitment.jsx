@@ -125,8 +125,6 @@ export default function Recruitment() {
 
         const rowCount = rows.length - 1; // מינוס כותרת
         let addedCount = 0;
-        let skippedExisting = 0;
-        let skippedDupe = 0;
 
         const normalizeHeader = (t) => String(t || '')
           .replace(/\uFEFF/g, '')
