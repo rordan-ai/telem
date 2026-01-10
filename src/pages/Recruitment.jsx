@@ -106,7 +106,13 @@ export default function Recruitment() {
           continue;
         }
         const csvText = await res.text();
+        console.log(`=== ${tab.sheetName} RAW CSV (first 500 chars) ===`);
+        console.log(csvText.substring(0, 500));
+        console.log(`=== ${tab.sheetName} CSV length: ${csvText.length} chars ===`);
+
         const rows = parseCSV(csvText);
+        console.log(`=== ${tab.sheetName} parsed rows: ${rows.length} ===`);
+
         if (!rows || rows.length < 2) {
           debugInfo.push(`${tab.sheetName}: אין שורות`);
           continue;
