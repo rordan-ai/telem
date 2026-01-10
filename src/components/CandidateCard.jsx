@@ -153,15 +153,16 @@ export default function CandidateCard({ candidate, onUpdate }) {
             placeholder="הוסף הערות..."
             className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 pr-3 pl-10 text-white"
             dir="rtl" />
-          <button
-            onClick={handleNotesBlur}
-            className="absolute top-2 left-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors"
-            title="שמור הערה">
-
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-            </svg>
-          </button>
+          {notes !== candidate.notes && notes.length > 0 && (
+            <button
+              onClick={handleNotesBlur}
+              className="absolute top-2 left-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors"
+              title="שמור הערה">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          )}
         </div>
 
 
