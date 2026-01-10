@@ -117,7 +117,11 @@ export default function CandidateCard({ candidate, onUpdate }) {
               size="sm"
               className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-3 h-10 shadow-sm"
             >
-              <MessageCircle className="w-4 h-4 ml-1" />
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/fafb8b988_.png" 
+                alt="WhatsApp" 
+                className="w-5 h-5 ml-1"
+              />
               <span className="hidden sm:inline">WhatsApp</span>
             </Button>
           </a>

@@ -52,18 +52,30 @@ export default function Recruitment() {
       const existingPhones = new Set(existingCandidates.map(c => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
-      // Fetch both tabs
+      // Fetch both tabs - try multiple possible sheet names
       const tabs = [
-        { name: "barista", gid: "0" },
-        { name: "cook", gid: "1924313319" }
+        { name: "barista", gids: ["0", "1977885789"] },
+        { name: "cook", gids: ["1924313319", "123456789"] }
       ];
 
       for (const tab of tabs) {
-        try {
-          const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`;
-          const response = await fetch(csvUrl);
-          const csvText = await response.text();
+        let csvText = null;
+        
+        // Try each possible gid for this position
+        for (const gid of tab.gids) {
+          try {
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+            const response = await fetch(csvUrl);
+            csvText = await response.text();
+            if (csvText && csvText.length > 10) break; // Found valid data
+          } catch {
+            continue; // Try next gid
+          }
+        }
 
+        if (!csvText) continue;
+
+        try {
           const lines = csvText.split("\n").filter(line => line.trim());
           if (lines.length < 2) continue;
 
