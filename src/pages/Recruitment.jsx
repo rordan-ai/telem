@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, RefreshCw } from "lucide-react";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
-import ImportFromSheet from "@/components/ImportFromSheet";
+
+const SHEET_ID = "1GQvdNPj_kAgpMQjveUGpMxQI0E3AtAP9bXXA6J2Mm1o";
 
 export default function Recruitment() {
   const [activePosition, setActivePosition] = useState("barista");
   const [importMessage, setImportMessage] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: candidates = [], isLoading } = useQuery({
@@ -21,15 +23,103 @@ export default function Recruitment() {
     (c) => c.position === activePosition
   );
 
-  const handleImportComplete = (count) => {
-    if (count > 0) {
-      setImportMessage(`יובאו ${count} מועמדים חדשים`);
-    } else {
-      setImportMessage("לא נמצאו מועמדים חדשים לייבוא");
+  // Helper to parse CSV line
+  const parseCSVLine = (line) => {
+    const result = [];
+    let current = "";
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        result.push(current);
+        current = "";
+      } else {
+        current += char;
+      }
     }
-    queryClient.invalidateQueries({ queryKey: ["candidates"] });
-    setTimeout(() => setImportMessage(null), 3000);
+    result.push(current);
+    return result;
   };
+
+  const fetchAndImport = async () => {
+    setIsImporting(true);
+    
+    try {
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+      const response = await fetch(csvUrl);
+      const csvText = await response.text();
+
+      const lines = csvText.split("\n").filter(line => line.trim());
+      if (lines.length < 2) {
+        setIsImporting(false);
+        return;
+      }
+
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+      const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
+      const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד"));
+      const positionIndex = headers.findIndex(h => h.includes("תפקיד") || h.includes("position") || h.includes("משרה"));
+
+      if (nameIndex === -1 || phoneIndex === -1) {
+        setIsImporting(false);
+        return;
+      }
+
+      const existingCandidates = await base44.entities.Candidate.list();
+      const existingPhones = new Set(existingCandidates.map(c => c.phone.replace(/\D/g, "")));
+
+      const newCandidates = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        const name = values[nameIndex]?.trim();
+        const phone = values[phoneIndex]?.trim();
+        let position = values[positionIndex]?.trim().toLowerCase() || "";
+
+        if (!name || !phone) continue;
+
+        const cleanPhone = phone.replace(/\D/g, "");
+        if (existingPhones.has(cleanPhone)) continue;
+
+        let positionValue = "barista";
+        if (position.includes("טבח") || position.includes("cook") || position.includes("מטבח")) {
+          positionValue = "cook";
+        }
+
+        newCandidates.push({
+          name,
+          phone,
+          position: positionValue,
+          status: "not_handled",
+          notes: "",
+          sheet_row_id: `row_${i}`,
+        });
+        
+        existingPhones.add(cleanPhone);
+      }
+
+      if (newCandidates.length > 0) {
+        await base44.entities.Candidate.bulkCreate(newCandidates);
+        setImportMessage(`נוספו ${newCandidates.length} מועמדים חדשים`);
+        setTimeout(() => setImportMessage(null), 4000);
+        queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+    }
+    
+    setIsImporting(false);
+  };
+
+  // Auto-import on load and every 5 minutes
+  useEffect(() => {
+    fetchAndImport();
+    const interval = setInterval(fetchAndImport, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleUpdate = () => {
     queryClient.invalidateQueries({ queryKey: ["candidates"] });
@@ -61,20 +151,22 @@ export default function Recruitment() {
 
       {/* Main Content */}
       <main className="max-w-lg mx-auto px-4 py-6">
-        {/* Import Button */}
-        <div className="mb-6">
-          <ImportFromSheet onImportComplete={handleImportComplete} />
-          {importMessage && (
-            <motion.p
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="text-sm text-emerald-600 text-center mt-2 font-medium"
-            >
-              {importMessage}
-            </motion.p>
-          )}
-        </div>
+        {/* Auto-sync indicator */}
+        {(isImporting || importMessage) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-100"
+          >
+            <div className="flex items-center justify-center gap-2 text-sm text-emerald-700">
+              {isImporting && <RefreshCw className="w-4 h-4 animate-spin" />}
+              <span className="font-medium">
+                {isImporting ? "מסנכרן עם גוגל שיטס..." : importMessage}
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Stats */}
         <div className="flex items-center justify-between mb-4">
