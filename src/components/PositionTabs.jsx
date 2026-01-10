@@ -1,10 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Coffee, ChefHat } from "lucide-react";
+import { Users, ShieldCheck, Building2, Briefcase } from "lucide-react";
 
 const positions = [
-{ id: "barista", label: "בריסטה", icon: Coffee },
-{ id: "cook", label: "טבח", icon: ChefHat }];
+{ id: "general", label: "עובדים כללי", icon: Users },
+{ id: "segan_tzoran", label: "סגן צורן", icon: ShieldCheck },
+{ id: "segan_beer_yaakov", label: "סגן באר יעקב", icon: Building2 },
+{ id: "manager_commerce", label: "מנהל סחר", icon: Briefcase }];
 
 
 export default function PositionTabs({ activePosition, onPositionChange }) {

@@ -200,7 +200,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
 
         {/* Expandable Details */}
-        {(candidate.age || candidate.has_experience || candidate.experience_description || candidate.availability) &&
+        {(candidate.email || candidate.job_title || candidate.has_experience || candidate.experience_description || candidate.currently_working || candidate.transportation) &&
         <>
             <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -225,13 +225,31 @@ export default function CandidateCard({ candidate, onUpdate }) {
             className="overflow-hidden">
 
               <div className="text-slate-50 pt-2 pb-1 space-y-2">
-                {candidate.age &&
-              <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-500">גיל:</span>
-                    <span className="text-slate-700">{candidate.age}</span>
+                {candidate.email &&
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-500">אימייל:</span>
+                    <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">{candidate.email}</a>
                   </div>
-              }
+                }
+                {candidate.job_title &&
+                <div className="flex items-center gap-2 text-sm">
+                    <Briefcase className="w-4 h-4 text-slate-400" />
+                    <span className="text-slate-500">תפקיד:</span>
+                    <span className="text-slate-700">{candidate.job_title}</span>
+                  </div>
+                }
+                {candidate.currently_working &&
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-500">עובד כרגע:</span>
+                    <span className="text-slate-700">{candidate.currently_working}</span>
+                  </div>
+                }
+                {candidate.transportation &&
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-500">רכב/ניידות:</span>
+                    <span className="text-slate-700">{candidate.transportation}</span>
+                  </div>
+                }
                 {candidate.has_experience &&
               <div className="text-slate-50 text-sm flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-slate-400" />

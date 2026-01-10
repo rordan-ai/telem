@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
 
-const SHEET_ID = "1GQvdNPj_kAgpMQjveUGpMxQI0E3AtAP9bXXA6J2Mm1o";
+const SHEET_ID = "12MZERyehuXxMUix9LYQSpdjespJ2bpDx1nyQYG-M4N4";
 
 export default function Recruitment() {
-  const [activePosition, setActivePosition] = useState("barista");
+  const [activePosition, setActivePosition] = useState("general");
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const queryClient = useQueryClient();
@@ -76,10 +76,12 @@ export default function Recruitment() {
       const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
-      // Fetch both tabs
+      // Fetch all 4 tabs
       const tabs = [
-      { name: "barista", gids: ["0"] },
-      { name: "cook", gids: ["129025812"] }];
+      { name: "general", gids: ["0"] },
+      { name: "segan_tzoran", gids: ["637665307"] },
+      { name: "segan_beer_yaakov", gids: ["691974204"] },
+      { name: "manager_commerce", gids: ["668402077"] }];
 
 
       for (const tab of tabs) {
@@ -104,57 +106,54 @@ export default function Recruitment() {
           if (rows.length < 2) continue;
 
           const headers = rows[0].map((h) => h.replace(/"/g, "").toLowerCase());
-          const nameIndex = headers.findIndex((h) => h.includes("שם") || h.includes("name"));
-          const phoneIndex = headers.findIndex((h) => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
-          const timeIndex = headers.findIndex((h) => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
-          const cityIndex = headers.findIndex((h) => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
-          const ageIndex = headers.findIndex((h) => h.includes("גיל") || h.includes("age"));
-          // Column C (index 2): "מועסק לחצי שנה לפחות"
-          const employedHalfYearIndex = 2;
-          // Column D (index 3): "האם תוך חודש יכול להתחיל"
-          const canStartMonthIndex = 3;
-          const availabilityIndex = headers.findIndex((h) => h.includes("זמינות") || h.includes("availability"));
-          const notesIndex = headers.findIndex((h) => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
-
-          if (nameIndex === -1 || phoneIndex === -1) continue;
+          const timeIndex = 0; // תאריך ושעה
+          const branchIndex = 1; // מודעה
+          const campaignIndex = 2; // שם הקמפיין
+          const nameIndex = 3; // שם מועמד
+          const phoneIndex = 4; // טלפון
+          const emailIndex = 5; // אימייל
+          const cityIndex = 6; // ישוב מגורים
+          const hasExperienceIndex = 7; // האם יש ניסיון
+          const jobTitleIndex = 8; // מועמד למשרה
+          const experienceDescIndex = 9; // תאור קצר ניסיון
+          const currentlyWorkingIndex = 10; // עובד כרגע?
+          const transportationIndex = 11; // רכב/ניידות
+          const notesIndex = 12; // הערות
 
           for (let i = 1; i < rows.length; i++) {
             const values = rows[i];
             const name = values[nameIndex]?.replace(/"/g, "").trim();
             let phone = values[phoneIndex]?.replace(/"/g, "").trim();
-
-            console.log(`${tab.name} row ${i}:`, { name, phone, rawPhone: values[phoneIndex], allValues: values });
+            const email = values[emailIndex]?.replace(/"/g, "").trim();
 
             if (!name || !phone) {
-              console.log(`Skipping - name: ${name}, phone: ${phone}`);
               continue;
             }
 
             const cleanPhone = phone.replace(/\D/g, "");
-            console.log(`cleanPhone: ${cleanPhone}, length: ${cleanPhone.length}`);
             if (!cleanPhone || cleanPhone.length < 9) {
-              console.log(`Skipping - invalid phone length`);
               continue;
             }
             if (existingPhones.has(cleanPhone)) {
-              console.log(`Skipping - phone exists`);
               continue;
             }
-
-            console.log(`✓ Adding candidate: ${name}`);
 
             newCandidates.push({
               name,
               phone,
+              email: email || "",
               position: tab.name,
-              contact_time: timeIndex !== -1 ? values[timeIndex]?.trim().replace(/"/g, "") : "",
-              city: cityIndex !== -1 ? values[cityIndex]?.trim().replace(/"/g, "") : "",
-              age: ageIndex !== -1 ? values[ageIndex]?.trim().replace(/"/g, "") : "",
-              has_experience: values[employedHalfYearIndex]?.trim().replace(/"/g, "") || "",
-              experience_description: values[canStartMonthIndex]?.trim().replace(/"/g, "") || "",
-              availability: availabilityIndex !== -1 ? values[availabilityIndex]?.trim().replace(/"/g, "") : "",
+              branch: values[branchIndex]?.trim().replace(/"/g, "") || "",
+              campaign: values[campaignIndex]?.trim().replace(/"/g, "") || "",
+              contact_time: values[timeIndex]?.trim().replace(/"/g, "") || "",
+              city: values[cityIndex]?.trim().replace(/"/g, "") || "",
+              has_experience: values[hasExperienceIndex]?.trim().replace(/"/g, "") || "",
+              job_title: values[jobTitleIndex]?.trim().replace(/"/g, "") || "",
+              experience_description: values[experienceDescIndex]?.trim().replace(/"/g, "") || "",
+              currently_working: values[currentlyWorkingIndex]?.trim().replace(/"/g, "") || "",
+              transportation: values[transportationIndex]?.trim().replace(/"/g, "") || "",
               status: "not_handled",
-              notes: notesIndex !== -1 ? values[notesIndex]?.trim().replace(/"/g, "") : "",
+              notes: values[notesIndex]?.trim().replace(/"/g, "") || "",
               sheet_row_id: `${tab.name}_row_${i}`
             });
 
@@ -195,7 +194,13 @@ export default function Recruitment() {
     queryClient.invalidateQueries({ queryKey: ["candidates"] });
   };
 
-  const positionLabel = activePosition === "barista" ? "בריסטה" : "טבח";
+  const positionLabels = {
+    general: "עובדים כללי",
+    segan_tzoran: "סגן צורן",
+    segan_beer_yaakov: "סגן באר יעקב",
+    manager_commerce: "מנהל סחר"
+  };
+  const positionLabel = positionLabels[activePosition] || activePosition;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100" dir="rtl">
@@ -208,8 +213,8 @@ export default function Recruitment() {
               <p className="text-slate-50 text-sm">ניהול מועמדים לתפקידים</p>
             </div>
             <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/d56033b78_1.jpg"
-              alt="גיוטליה לוגו"
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/8021c79b4_LogoTelemarket-0212.jpg"
+              alt="תלם מרקט לוגו"
               className="w-16 h-16 rounded-full object-cover shadow-md" />
 
           </div>
