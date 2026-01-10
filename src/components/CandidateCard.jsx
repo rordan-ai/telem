@@ -200,7 +200,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
 
         {/* Expandable Details */}
-        {(candidate.email || candidate.job_title || candidate.has_experience || candidate.experience_description || candidate.currently_working || candidate.transportation) &&
+        {(candidate.branch || candidate.campaign || candidate.email || candidate.job_title || candidate.has_experience || candidate.experience_description || candidate.currently_working || candidate.transportation) &&
         <>
             <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -224,53 +224,55 @@ export default function CandidateCard({ candidate, onUpdate }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden">
 
-              <div className="text-slate-50 pt-2 pb-1 space-y-2">
+              <div className="text-slate-50 pt-2 pb-1 space-y-2 text-xs">
+                {candidate.branch &&
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">מודעה:</span>
+                    <span className="text-slate-200">{candidate.branch}</span>
+                  </div>
+                }
+                {candidate.campaign &&
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">קמפיין:</span>
+                    <span className="text-slate-200">{candidate.campaign}</span>
+                  </div>
+                }
                 {candidate.email &&
-                <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-500">אימייל:</span>
-                    <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">{candidate.email}</a>
-                  </div>
-                }
-                {candidate.job_title &&
-                <div className="flex items-center gap-2 text-sm">
-                    <Briefcase className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-500">תפקיד:</span>
-                    <span className="text-slate-700">{candidate.job_title}</span>
-                  </div>
-                }
-                {candidate.currently_working &&
-                <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-500">עובד כרגע:</span>
-                    <span className="text-slate-700">{candidate.currently_working}</span>
-                  </div>
-                }
-                {candidate.transportation &&
-                <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-500">רכב/ניידות:</span>
-                    <span className="text-slate-700">{candidate.transportation}</span>
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">אימייל:</span>
+                    <a href={`mailto:${candidate.email}`} className="text-blue-400 hover:underline break-all">{candidate.email}</a>
                   </div>
                 }
                 {candidate.has_experience &&
-              <div className="text-slate-50 text-sm flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-50">ניסיון:</span>
-                    <span className="text-slate-50">{candidate.has_experience}</span>
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">ניסיון:</span>
+                    <span className="text-slate-200">{candidate.has_experience}</span>
                   </div>
-              }
+                }
+                {candidate.job_title &&
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">תפקיד:</span>
+                    <span className="text-slate-200">{candidate.job_title}</span>
+                  </div>
+                }
                 {candidate.experience_description &&
-              <div className="flex items-start gap-2 text-sm">
-                    <Briefcase className="w-4 h-4 text-slate-400 mt-0.5" />
-                    <span className="text-slate-50">תאור ניסיון:</span>
-                    <span className="text-slate-50">{candidate.experience_description}</span>
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">תאור ניסיון:</span>
+                    <span className="text-slate-200">{candidate.experience_description}</span>
                   </div>
-              }
-                {candidate.availability &&
-              <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-500">זמינות:</span>
-                    <span className="text-slate-700">{candidate.availability}</span>
+                }
+                {candidate.currently_working &&
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">עובד כרגע:</span>
+                    <span className="text-slate-200">{candidate.currently_working}</span>
                   </div>
-              }
+                }
+                {candidate.transportation &&
+                <div className="flex items-start gap-2">
+                    <span className="text-slate-400 font-semibold min-w-[60px]">רכב/ניידות:</span>
+                    <span className="text-slate-200">{candidate.transportation}</span>
+                  </div>
+                }
               </div>
             </motion.div>
           </>

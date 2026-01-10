@@ -119,45 +119,51 @@ export default function Recruitment() {
           const currentlyWorkingIndex = 10; // עובד כרגע?
           const transportationIndex = 11; // רכב/ניידות
           const notesIndex = 12; // הערות
+          const notesIndex2 = 13; // הערות נוסף
 
           for (let i = 1; i < rows.length; i++) {
-            const values = rows[i];
-            const name = values[nameIndex]?.replace(/"/g, "").trim();
-            let phone = values[phoneIndex]?.replace(/"/g, "").trim();
-            const email = values[emailIndex]?.replace(/"/g, "").trim();
+          const values = rows[i];
+          const name = values[nameIndex]?.replace(/"/g, "").trim();
+          let phone = values[phoneIndex]?.replace(/"/g, "").trim();
+          const email = values[emailIndex]?.replace(/"/g, "").trim();
 
-            if (!name || !phone) {
-              continue;
-            }
+          if (!name || !phone) {
+            continue;
+          }
 
-            const cleanPhone = phone.replace(/\D/g, "");
-            if (!cleanPhone || cleanPhone.length < 9) {
-              continue;
-            }
-            if (existingPhones.has(cleanPhone)) {
-              continue;
-            }
+          const cleanPhone = phone.replace(/\D/g, "");
+          if (!cleanPhone || cleanPhone.length < 9) {
+            continue;
+          }
+          if (existingPhones.has(cleanPhone)) {
+            continue;
+          }
 
-            newCandidates.push({
-              name,
-              phone,
-              email: email || "",
-              position: tab.name,
-              branch: values[branchIndex]?.trim().replace(/"/g, "") || "",
-              campaign: values[campaignIndex]?.trim().replace(/"/g, "") || "",
-              contact_time: values[timeIndex]?.trim().replace(/"/g, "") || "",
-              city: values[cityIndex]?.trim().replace(/"/g, "") || "",
-              has_experience: values[hasExperienceIndex]?.trim().replace(/"/g, "") || "",
-              job_title: values[jobTitleIndex]?.trim().replace(/"/g, "") || "",
-              experience_description: values[experienceDescIndex]?.trim().replace(/"/g, "") || "",
-              currently_working: values[currentlyWorkingIndex]?.trim().replace(/"/g, "") || "",
-              transportation: values[transportationIndex]?.trim().replace(/"/g, "") || "",
-              status: "not_handled",
-              notes: values[notesIndex]?.trim().replace(/"/g, "") || "",
-              sheet_row_id: `${tab.name}_row_${i}`
-            });
+          // Combine notes from both columns
+          const note1 = values[notesIndex]?.trim().replace(/"/g, "") || "";
+          const note2 = values[notesIndex2]?.trim().replace(/"/g, "") || "";
+          const combinedNotes = [note1, note2].filter(n => n).join(" | ");
 
-            existingPhones.add(cleanPhone);
+          newCandidates.push({
+            name,
+            phone,
+            email: email || "",
+            position: tab.name,
+            branch: values[branchIndex]?.trim().replace(/"/g, "") || "",
+            campaign: values[campaignIndex]?.trim().replace(/"/g, "") || "",
+            contact_time: values[timeIndex]?.trim().replace(/"/g, "") || "",
+            city: values[cityIndex]?.trim().replace(/"/g, "") || "",
+            has_experience: values[hasExperienceIndex]?.trim().replace(/"/g, "") || "",
+            job_title: values[jobTitleIndex]?.trim().replace(/"/g, "") || "",
+            experience_description: values[experienceDescIndex]?.trim().replace(/"/g, "") || "",
+            currently_working: values[currentlyWorkingIndex]?.trim().replace(/"/g, "") || "",
+            transportation: values[transportationIndex]?.trim().replace(/"/g, "") || "",
+            status: "not_handled",
+            notes: combinedNotes,
+            sheet_row_id: `${tab.name}_row_${i}`
+          });
+
+          existingPhones.add(cleanPhone);
           }
         } catch (tabError) {
           console.error(`Error fetching ${tab.name} tab:`, tabError);
