@@ -92,12 +92,20 @@ export default function Recruitment() {
           if (!response.ok) continue;
           
           const csvText = await response.text();
-          const rows = parseCSV(csvText);
+          console.log(`Tab ${tab.name}: fetched ${csvText.length} chars`);
           
-          if (rows.length < 2) continue; // No data found or just headers
+          const rows = parseCSV(csvText);
+          console.log(`Tab ${tab.name}: parsed ${rows.length} rows`);
+          
+          if (rows.length < 2) {
+            console.warn(`Tab ${tab.name}: Not enough rows (only ${rows.length})`);
+            continue;
+          }
 
           // Dynamic header mapping
           const headers = rows[0].map(h => h.toLowerCase().trim());
+          console.log(`Tab ${tab.name} headers:`, headers);
+          
           const getIndex = (possibleNames) => headers.findIndex(h => possibleNames.some(name => h.includes(name)));
 
           const idx = {
@@ -115,13 +123,19 @@ export default function Recruitment() {
             transport: getIndex(["רכב", "ניידות", "מרחק"]),
             notes: getIndex(["הערות"])
           };
+          
+          console.log(`Tab ${tab.name} column mapping:`, idx);
 
           if (idx.name === -1 || idx.phone === -1) {
-            console.error(`Missing required columns in ${tab.name}`);
+            console.error(`Missing required columns in ${tab.name}. Name index: ${idx.name}, Phone index: ${idx.phone}`);
             continue;
           }
 
           let skippedCount = 0;
+          let duplicateCount = 0;
+          let invalidPhoneCount = 0;
+          let missingDataCount = 0;
+
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             // Safe access to columns
@@ -129,18 +143,20 @@ export default function Recruitment() {
             const phone = row[idx.phone];
             
             if (!name || !phone) {
-              skippedCount++;
+              missingDataCount++;
+              if (i < 5) console.log(`Row ${i} missing data: name="${name}", phone="${phone}"`);
               continue;
             }
 
             const cleanPhone = phone.replace(/\D/g, "");
             if (!cleanPhone || cleanPhone.length < 9) {
-               skippedCount++;
+               invalidPhoneCount++;
+               if (i < 5) console.log(`Row ${i} invalid phone: "${phone}" -> "${cleanPhone}"`);
                continue;
             }
             
             if (existingPhones.has(cleanPhone)) {
-               skippedCount++;
+               duplicateCount++;
                continue;
             }
 
