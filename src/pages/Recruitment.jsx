@@ -204,17 +204,9 @@ export default function Recruitment() {
         await base44.entities.Candidate.bulkCreate(newCandidates);
       }
 
-      // Handle deleted candidates - remove those not in the current sheet
-      // Collect all phones from ALL tabs (existing + new)
-      const allSheetsPhones = new Set([
-        ...newCandidates.map(c => c.phone.replace(/\D/g, "")),
-        ...Array.from(existingPhones)
-      ]);
-      const candidatesToDelete = existingCandidates.filter(c => !allSheetsPhones.has(c.phone.replace(/\D/g, "")));
-      
-      // Delete in parallel for better performance
-      if (candidatesToDelete.length > 0) {
-        await Promise.all(candidatesToDelete.map(c => base44.entities.Candidate.delete(c.id)));
+      // Handle new candidates
+      if (newCandidates.length > 0) {
+        await base44.entities.Candidate.bulkCreate(newCandidates);
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
@@ -225,8 +217,7 @@ export default function Recruitment() {
         return `${t.sheetName}: ${count}`;
       }).join(" | ");
       
-      const deletedMsg = candidatesToDelete.length > 0 ? `, ${candidatesToDelete.length} נמחקו` : "";
-      setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים${deletedMsg}. (${stats})`);
+      setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים. (${stats})`);
       setTimeout(() => setImportMessage(null), 10000);
 
     } catch (error) {
