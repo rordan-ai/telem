@@ -91,27 +91,22 @@ export default function Recruitment() {
 
       for (const tab of tabs) {
         try {
-          // Use Google Viz API for reliable CSV export by sheet name
-          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab.sheetName)}`;
-          console.log(`Fetching ${tab.name} from: ${url}`);
-          
+          // Use OpenSheet API to get all data from the sheet (no size limits)
+          const sheetNameEncoded = encodeURIComponent(tab.sheetName);
+          const url = `https://api.opensheet.cc/v1/${SHEET_ID}/${sheetNameEncoded}`;
+          console.log(`Fetching ${tab.name} from OpenSheet API: ${url}`);
+
           const response = await fetch(url);
-          if (!response.ok) continue;
-          
-          const csvText = await response.text();
-          console.log(`Tab ${tab.name}: fetched ${csvText.length} chars`);
-          console.log(`First 500 chars:`, csvText.substring(0, 500));
+          if (!response.ok) {
+            console.error(`Failed to fetch ${tab.name}:`, response.status);
+            continue;
+          }
 
-          const rows = parseCSV(csvText);
-          console.log(`Tab ${tab.name}: parsed ${rows.length} rows`);
-          console.log(`Row lengths:`, rows.slice(0, 5).map((r, i) => `Row ${i}: ${r.length} cells`));
+          const data = await response.json();
+          console.log(`Tab ${tab.name}: fetched ${data.length} rows from API`);
 
-          // Count non-empty rows
-          const nonEmptyRows = rows.filter(r => r.some(cell => cell.trim()));
-          console.log(`Tab ${tab.name}: ${nonEmptyRows.length} non-empty rows out of ${rows.length}`);
-
-          if (rows.length < 2) {
-            console.warn(`Tab ${tab.name}: Not enough rows (only ${rows.length})`);
+          if (!data || data.length === 0) {
+            console.warn(`Tab ${tab.name}: No data returned from API`);
             continue;
           }
 
