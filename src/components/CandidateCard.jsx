@@ -156,8 +156,8 @@ export default function CandidateCard({ candidate, onUpdate }) {
           <button
             onClick={handleNotesBlur}
             className="absolute top-2 left-2 w-6 h-6 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors"
-            title="שמור הערה"
-          >
+            title="שמור הערה">
+
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
             </svg>
@@ -190,7 +190,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden">
 
-              <div className="space-y-2 pt-2 pb-1">
+              <div className="text-slate-50 pt-2 pb-1 space-y-2">
                 {candidate.age &&
               <div className="flex items-center gap-2 text-sm">
                     <Calendar className="w-4 h-4 text-slate-400" />
@@ -199,17 +199,17 @@ export default function CandidateCard({ candidate, onUpdate }) {
                   </div>
               }
                 {candidate.has_experience &&
-              <div className="flex items-center gap-2 text-sm">
+              <div className="text-slate-50 text-sm flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-slate-400" />
-                    <span className="text-slate-500">ניסיון:</span>
-                    <span className="text-slate-700">{candidate.has_experience}</span>
+                    <span className="text-slate-50">ניסיון:</span>
+                    <span className="text-slate-50">{candidate.has_experience}</span>
                   </div>
               }
                 {candidate.experience_description &&
               <div className="flex items-start gap-2 text-sm">
                     <Briefcase className="w-4 h-4 text-slate-400 mt-0.5" />
-                    <span className="text-slate-500">תאור ניסיון:</span>
-                    <span className="text-slate-700">{candidate.experience_description}</span>
+                    <span className="text-slate-50">תאור ניסיון:</span>
+                    <span className="text-slate-50">{candidate.experience_description}</span>
                   </div>
               }
                 {candidate.availability &&
