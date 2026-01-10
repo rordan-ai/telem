@@ -232,12 +232,31 @@ export default function Recruitment() {
             candidateData.pnl_analysis = idx.pnl !== -1 ? String(row[idx.pnl] ?? '') : '';
             candidateData.availability = idx.availability !== -1 ? String(row[idx.availability] ?? '') : '';
           }
-          
-          toCreate.push(candidateData);
-            }
 
-            debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים, ${skippedExisting} קיימים, ${skippedDupe} כפולים`);
+          toCreate.push(candidateData);
+          }
+
+          // סנכרון מחיקות - רק לסגן באר יעקב (אחרי שסיימנו לעבור על כל השורות)
+          if (tab.name === "segan_beer_yaakov") {
+          // אסוף את כל מספרי הטלפון מהגיליון
+          const sheetPhoneKeys = new Set();
+          for (const row of rows.slice(1)) {
+            const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
+            const cleaned = String(phoneRaw).replace(/\D/g, '');
+            if (cleaned) {
+              sheetPhoneKeys.add(`${cleaned}_${tab.name}`);
             }
+          }
+          // מצא מועמדים שקיימים באפליקציה אבל לא בגיליון
+          for (const [key, candidate] of existingMap.entries()) {
+            if (candidate.position === "segan_beer_yaakov" && !sheetPhoneKeys.has(key)) {
+              toDelete.push(candidate.id);
+            }
+          }
+          }
+
+          debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים, ${skippedExisting} קיימים, ${skippedDupe} כפולים`);
+          }
 
             console.log("=== דוח ייבוא ===");
             debugInfo.forEach(line => console.log(line));
