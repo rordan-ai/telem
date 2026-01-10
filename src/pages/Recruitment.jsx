@@ -82,13 +82,7 @@ export default function Recruitment() {
 
           const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, "").toLowerCase());
           const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
-          // Find ALL phone column indexes (there might be multiple)
-          const phoneIndexes = [];
-          headers.forEach((h, idx) => {
-            if (h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר")) {
-              phoneIndexes.push(idx);
-            }
-          });
+          const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
           const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
           const cityIndex = headers.findIndex(h => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
           const ageIndex = headers.findIndex(h => h.includes("גיל") || h.includes("age"));
