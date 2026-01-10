@@ -78,10 +78,10 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // מחיקת כל המועמדים הקיימים לפני ייבוא מחדש
+      // מחיקת כל המועמדים הקיימים במכה אחת
       const existing = await base44.entities.Candidate.list();
-      for (const c of existing) {
-        await base44.entities.Candidate.delete(c.id);
+      if (existing.length > 0) {
+        await Promise.all(existing.map(c => base44.entities.Candidate.delete(c.id)));
       }
 
       const tabs = [
