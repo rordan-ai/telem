@@ -162,14 +162,21 @@ export default function Recruitment() {
           email: findIndex(["אימייל", "דואר", "מייל"]),
           branch: findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
           campaign: findIndex(["שם הקמפיין", "קמפיין"]),
-          time: findIndex(["תאריך ושעה", "תאריך", "שעה"]),
+          time: findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"]),
           city: findIndex(["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
           exp: findIndex(["האם יש ניסיון", "ניסיון"]),
           job: findIndex(["מועמד למשרה", "משרה", "תפקיד"]),
           expDesc: findIndex(["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
           working: findIndex(["עובד כרגע?", "עובד כרגע"]),
           transport: findIndex(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
-          notes: findIndex(["הערות"])
+          notes: findIndex(["הערות"]),
+          // שדות מנהל סחר בלבד
+          commerceExp: findIndex(["ניסיון בסחר/ניהול קטגוריות של שנה", "ניסיון בסחר"]),
+          comax: findIndex(["שליטה בקומקס"]),
+          planogram: findIndex(["בניית פלנוגרמות ונראות מדף"]),
+          supplierNeg: findIndex(["ניהול מן\" מול ספקים גדולים", "ניהול מו\"מ"]),
+          pnl: findIndex(["ניתוח דוח רווח והפסד ותמחור", "ניתוח דוח רווח"]),
+          availability: findIndex(["זמינות"])
         };
 
         for (const row of rows.slice(1)) {
