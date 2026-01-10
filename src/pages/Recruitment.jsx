@@ -124,6 +124,25 @@ export default function Recruitment() {
         let addedCount = 0;
         let skippedExisting = 0;
         let skippedDupe = 0;
+        
+        // סנכרון מחיקות - רק לסגן באר יעקב
+        const sheetPhoneKeys = new Set();
+        if (tab.name === "segan_beer_yaakov") {
+          // אסוף את כל מספרי הטלפון מהגיליון
+          for (const row of rows.slice(1)) {
+            const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
+            const cleaned = String(phoneRaw).replace(/\D/g, '');
+            if (cleaned) {
+              sheetPhoneKeys.add(`${cleaned}_${tab.name}`);
+            }
+          }
+          // מצא מועמדים שקיימים באפליקציה אבל לא בגיליון
+          for (const [key, candidate] of existingMap.entries()) {
+            if (candidate.position === "segan_beer_yaakov" && !sheetPhoneKeys.has(key)) {
+              toDelete.push(candidate.id);
+            }
+          }
+        }
 
         const normalizeHeader = (t) => String(t || '')
           .replace(/\uFEFF/g, '')
