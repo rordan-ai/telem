@@ -262,6 +262,15 @@ export default function Recruitment() {
             debugInfo.forEach(line => console.log(line));
             console.log(`סה"כ להוספה: ${toCreate.length}`);
 
+      // מחיקת מועמדים שנמחקו מהגיליון (סגן באר יעקב בלבד)
+      if (toDelete.length > 0) {
+        console.log(`מוחק ${toDelete.length} מועמדים שנמחקו מגיליון סגן באר יעקב`);
+        for (const id of toDelete) {
+          await base44.entities.Candidate.delete(id);
+        }
+        debugInfo.push(`סגן באר יעקב: נמחקו ${toDelete.length} מועמדים שלא בגיליון`);
+      }
+
       // ייבוא רק חדשים - בקבוצות של 25 עם השהייה
       if (toCreate.length > 0) {
         const batchSize = 25;
