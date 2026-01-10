@@ -95,15 +95,27 @@ export default function Recruitment() {
 
       const toCreate = [];
       const seenKeys = new Set();
+      const debugInfo = [];
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
         const res = await fetch(url);
-        if (!res.ok) continue;
+        if (!res.ok) {
+          debugInfo.push(`${tab.sheetName}: שגיאת רשת`);
+          continue;
+        }
         const csvText = await res.text();
         const rows = parseCSV(csvText);
-        if (!rows || rows.length < 2) continue;
+        if (!rows || rows.length < 2) {
+          debugInfo.push(`${tab.sheetName}: אין שורות`);
+          continue;
+        }
+
+        const rowCount = rows.length - 1; // מינוס כותרת
+        let addedCount = 0;
+        let skippedExisting = 0;
+        let skippedDupe = 0;
 
         const normalizeHeader = (t) => String(t || '')
           .replace(/\uFEFF/g, '')
