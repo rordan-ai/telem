@@ -109,10 +109,10 @@ export default function Recruitment() {
           const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
           const cityIndex = headers.findIndex(h => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
           const ageIndex = headers.findIndex(h => h.includes("גיל") || h.includes("age"));
-          // Column C: "ניסיון?" (yes/no)
-          const hasExperienceIndex = headers.findIndex(h => h === "ניסיון?" || h.includes("ניסיון?"));
-          // Column D: "תאור ניסיון" (experience description)
-          const experienceDescIndex = headers.findIndex(h => h.includes("תאור ניסיון") || h.includes("תאור"));
+          // Column C (index 2): "ניסיון?" (yes/no)
+          const hasExperienceIndex = 2;
+          // Column D (index 3): "תאור ניסיון" (experience description)
+          const experienceDescIndex = 3;
           const availabilityIndex = headers.findIndex(h => h.includes("זמינות") || h.includes("availability"));
           const notesIndex = headers.findIndex(h => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
 
