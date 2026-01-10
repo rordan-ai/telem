@@ -115,10 +115,10 @@ export default function Recruitment() {
 
           if (nameIndex === -1 || phoneIndex === -1) continue;
 
-          for (let i = 1; i < lines.length; i++) {
-            const values = parseCSVLine(lines[i]);
-            const name = values[nameIndex]?.trim().replace(/"/g, "");
-            let phone = values[phoneIndex]?.trim().replace(/"/g, "");
+          for (let i = 1; i < rows.length; i++) {
+            const values = rows[i];
+            const name = values[nameIndex]?.replace(/"/g, "").trim();
+            let phone = values[phoneIndex]?.replace(/"/g, "").trim();
 
             console.log(`${tab.name} row ${i}:`, { name, phone, rawPhone: values[phoneIndex], allValues: values });
 
