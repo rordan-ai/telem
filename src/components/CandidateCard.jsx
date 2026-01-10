@@ -200,83 +200,71 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
 
         {/* Expandable Details */}
-        {(candidate.branch || candidate.campaign || candidate.email || candidate.job_title || candidate.has_experience || candidate.experience_description || candidate.currently_working || candidate.transportation) &&
-        <>
-            <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors py-2">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors py-2">
 
-              <span className="text-slate-50">פרטים נוספים</span>
-              <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}>
+          <span className="text-slate-50">פרטים נוספים</span>
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}>
 
-                <ChevronDown className="text-zinc-50 lucide lucide-chevron-down w-4 h-4" />
-              </motion.div>
-            </button>
+            <ChevronDown className="text-zinc-50 lucide lucide-chevron-down w-4 h-4" />
+          </motion.div>
+        </button>
 
-            <motion.div
-            initial={false}
-            animate={{
-              height: isExpanded ? "auto" : 0,
-              opacity: isExpanded ? 1 : 0
-            }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden">
+        <motion.div
+          initial={false}
+          animate={{
+            height: isExpanded ? "auto" : 0,
+            opacity: isExpanded ? 1 : 0
+          }}
+          transition={{ duration: 0.2 }}
+          className="overflow-hidden">
 
-              <div className="text-slate-50 pt-2 pb-1 space-y-2 text-xs">
-                {candidate.branch &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">מודעה:</span>
-                    <span className="text-slate-200">{candidate.branch}</span>
-                  </div>
-              }
-                {candidate.campaign &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">קמפיין:</span>
-                    <span className="text-slate-200">{candidate.campaign}</span>
-                  </div>
-              }
-                {candidate.email &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">אימייל:</span>
-                    <a href={`mailto:${candidate.email}`} className="text-blue-400 hover:underline break-all">{candidate.email}</a>
-                  </div>
-              }
-                {candidate.has_experience &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">ניסיון:</span>
-                    <span className="text-slate-200">{candidate.has_experience}</span>
-                  </div>
-              }
-                {candidate.job_title &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">תפקיד:</span>
-                    <span className="text-slate-200">{candidate.job_title}</span>
-                  </div>
-              }
-                {candidate.experience_description &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">תאור ניסיון:</span>
-                    <span className="text-slate-200">{candidate.experience_description}</span>
-                  </div>
-              }
-                {candidate.currently_working &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">עובד כרגע:</span>
-                    <span className="text-slate-200">{candidate.currently_working}</span>
-                  </div>
-              }
-                {candidate.transportation &&
-              <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[60px]">רכב/ניידות:</span>
-                    <span className="text-slate-200">{candidate.transportation}</span>
-                  </div>
-              }
-              </div>
-            </motion.div>
-          </>
-        }
+          <div className="text-slate-50 pt-2 pb-1 space-y-2 text-xs">
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
+              <span className="text-slate-200">{candidate.contact_time || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">מודעה:</span>
+              <span className="text-slate-200">{candidate.branch || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">קמפיין:</span>
+              <span className="text-slate-200">{candidate.campaign || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">אימייל:</span>
+              {candidate.email ? <a href={`mailto:${candidate.email}`} className="text-blue-400 hover:underline break-all">{candidate.email}</a> : <span className="text-slate-200">-</span>}
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">ישוב מגורים:</span>
+              <span className="text-slate-200">{candidate.city || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">האם יש ניסיון:</span>
+              <span className="text-slate-200">{candidate.has_experience || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">מועמד למשרה:</span>
+              <span className="text-slate-200">{candidate.job_title || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">תאור ניסיון:</span>
+              <span className="text-slate-200">{candidate.experience_description || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">עובד כרגע:</span>
+              <span className="text-slate-200">{candidate.currently_working || '-'}</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-slate-400 font-semibold min-w-[80px]">רכב/ניידות:</span>
+              <span className="text-slate-200">{candidate.transportation || '-'}</span>
+            </div>
+          </div>
+        </motion.div>
 
         {isSaving &&
         <div className="text-xs text-slate-400 mt-2 text-center">שומר...</div>
