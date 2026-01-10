@@ -78,14 +78,18 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
+      // מחיקת כל המועמדים הקיימים לפני ייבוא מחדש
+      const existing = await base44.entities.Candidate.list();
+      for (const c of existing) {
+        await base44.entities.Candidate.delete(c.id);
+      }
+
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
         { name: "segan_tzoran", sheetName: "סגן צורן" },
         { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
         { name: "manager_commerce", sheetName: "מנהל סחר" }
       ];
-      
-      console.log("Starting import from sheets...");
 
       const newCandidates = [];
 
