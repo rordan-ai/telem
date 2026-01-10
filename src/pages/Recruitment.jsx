@@ -148,7 +148,6 @@ export default function Recruitment() {
           }
 
           let duplicateCount = 0;
-          let invalidPhoneCount = 0;
 
           for (const row of data) {
             const rowValues = Object.values(row);
