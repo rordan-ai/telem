@@ -151,7 +151,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="הוסף הערות..."
-            className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 pr-3 pl-10"
+            className="w-full rounded-xl border-slate-200 resize-none text-sm min-h-[60px] focus:border-slate-300 focus:ring-slate-300 pr-3 pl-10 text-white"
             dir="rtl" />
           <button
             onClick={handleNotesBlur}
