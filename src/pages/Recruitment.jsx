@@ -17,7 +17,7 @@ export default function Recruitment() {
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ["candidates"],
-    queryFn: () => base44.entities.Candidate.list("-created_date"),
+    queryFn: () => base44.entities.Candidate.list("-created_date")
   });
 
   const filteredCandidates = candidates.filter(
@@ -30,10 +30,10 @@ export default function Recruitment() {
     let currentRow = [];
     let currentCell = "";
     let inQuotes = false;
-    
+
     for (let i = 0; i < csvText.length; i++) {
       const char = csvText[i];
-      
+
       if (char === '"') {
         if (inQuotes && csvText[i + 1] === '"') {
           currentCell += '"';
@@ -49,7 +49,7 @@ export default function Recruitment() {
           i++; // Skip \r\n
         }
         currentRow.push(currentCell.trim());
-        if (currentRow.some(cell => cell)) { // Only add non-empty rows
+        if (currentRow.some((cell) => cell)) {// Only add non-empty rows
           rows.push(currentRow);
         }
         currentRow = [];
@@ -58,33 +58,33 @@ export default function Recruitment() {
         currentCell += char;
       }
     }
-    
+
     // Handle last cell/row
     currentRow.push(currentCell.trim());
-    if (currentRow.some(cell => cell)) {
+    if (currentRow.some((cell) => cell)) {
       rows.push(currentRow);
     }
-    
+
     return rows;
   };
 
   const fetchAndImport = async () => {
     setIsImporting(true);
-    
+
     try {
       const existingCandidates = await base44.entities.Candidate.list();
-      const existingPhones = new Set(existingCandidates.map(c => c.phone.replace(/\D/g, "")));
+      const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
       // Fetch both tabs
       const tabs = [
-        { name: "barista", gids: ["0"] },
-        { name: "cook", gids: ["129025812"] }
-      ];
+      { name: "barista", gids: ["0"] },
+      { name: "cook", gids: ["129025812"] }];
+
 
       for (const tab of tabs) {
         let csvText = null;
-        
+
         // Try each possible gid for this position
         for (const gid of tab.gids) {
           try {
@@ -103,18 +103,18 @@ export default function Recruitment() {
           const rows = parseCSV(csvText);
           if (rows.length < 2) continue;
 
-          const headers = rows[0].map(h => h.replace(/"/g, "").toLowerCase());
-          const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
-          const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
-          const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
-          const cityIndex = headers.findIndex(h => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
-          const ageIndex = headers.findIndex(h => h.includes("גיל") || h.includes("age"));
+          const headers = rows[0].map((h) => h.replace(/"/g, "").toLowerCase());
+          const nameIndex = headers.findIndex((h) => h.includes("שם") || h.includes("name"));
+          const phoneIndex = headers.findIndex((h) => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
+          const timeIndex = headers.findIndex((h) => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
+          const cityIndex = headers.findIndex((h) => h.includes("עיר") || h.includes("city") || h.includes("יישוב"));
+          const ageIndex = headers.findIndex((h) => h.includes("גיל") || h.includes("age"));
           // Column C (index 2): "ניסיון?" (yes/no)
           const hasExperienceIndex = 2;
           // Column D (index 3): "תאור ניסיון" (experience description)
           const experienceDescIndex = 3;
-          const availabilityIndex = headers.findIndex(h => h.includes("זמינות") || h.includes("availability"));
-          const notesIndex = headers.findIndex(h => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
+          const availabilityIndex = headers.findIndex((h) => h.includes("זמינות") || h.includes("availability"));
+          const notesIndex = headers.findIndex((h) => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
 
           if (nameIndex === -1 || phoneIndex === -1) continue;
 
@@ -140,7 +140,7 @@ export default function Recruitment() {
               console.log(`Skipping - phone exists`);
               continue;
             }
-            
+
             console.log(`✓ Adding candidate: ${name}`);
 
             newCandidates.push({
@@ -155,9 +155,9 @@ export default function Recruitment() {
               availability: availabilityIndex !== -1 ? values[availabilityIndex]?.trim().replace(/"/g, "") : "",
               status: "not_handled",
               notes: notesIndex !== -1 ? values[notesIndex]?.trim().replace(/"/g, "") : "",
-              sheet_row_id: `${tab.name}_row_${i}`,
+              sheet_row_id: `${tab.name}_row_${i}`
             });
-            
+
             existingPhones.add(cleanPhone);
           }
         } catch (tabError) {
@@ -177,7 +177,7 @@ export default function Recruitment() {
     } catch (error) {
       console.error("Import error:", error);
     }
-    
+
     setIsImporting(false);
   };
 
@@ -201,60 +201,60 @@ export default function Recruitment() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100" dir="rtl">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-slate-100">
-        <div className="max-w-lg mx-auto px-4 py-4">
+        <div className="bg-slate-900 mx-auto px-4 py-4 max-w-lg">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">גיוס מועמדים</h1>
-              <p className="text-sm text-slate-500">ניהול מועמדים לתפקידים</p>
+              <h1 className="text-slate-50 text-xl font-bold">גיוס מועמדים</h1>
+              <p className="text-slate-50 text-sm">ניהול מועמדים לתפקידים</p>
             </div>
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/d56033b78_1.jpg" 
-              alt="גיוטליה לוגו" 
-              className="w-16 h-16 rounded-full object-cover shadow-md"
-            />
+            <img
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/d56033b78_1.jpg"
+              alt="גיוטליה לוגו"
+              className="w-16 h-16 rounded-full object-cover shadow-md" />
+
           </div>
           
           <PositionTabs
             activePosition={activePosition}
-            onPositionChange={setActivePosition}
-          />
+            onPositionChange={setActivePosition} />
+
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main className="bg-slate-500 mx-auto px-4 py-6 max-w-lg">
         {/* Import button and status */}
         <div className="mb-4 space-y-3">
           <Button
             onClick={fetchAndImport}
-            disabled={isImporting}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {isImporting ? (
-              <>
+            disabled={isImporting} className="bg-slate-300 text-slate-900 px-4 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 w-full hover:bg-blue-700">
+
+
+            {isImporting ?
+            <>
                 <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
                 מייבא מהגיליון...
-              </>
-            ) : (
-              <>
+              </> :
+
+            <>
                 <RefreshCw className="w-4 h-4 ml-2" />
                 רענון נתונים
               </>
-            )}
+            }
           </Button>
           
-          {importMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="p-3 rounded-xl bg-emerald-50 border border-emerald-100"
-            >
+          {importMessage &&
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+
               <div className="flex items-center justify-center gap-2 text-sm text-emerald-700">
                 <span className="font-medium">{importMessage}</span>
               </div>
             </motion.div>
-          )}
+          }
         </div>
 
         {/* Stats */}
@@ -268,16 +268,16 @@ export default function Recruitment() {
         </div>
 
         {/* Candidates List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
+        {isLoading ?
+        <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 text-slate-400 animate-spin" />
-          </div>
-        ) : filteredCandidates.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-20"
-          >
+          </div> :
+        filteredCandidates.length === 0 ?
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-20">
+
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
               <Users className="w-8 h-8 text-slate-400" />
             </div>
@@ -285,28 +285,28 @@ export default function Recruitment() {
             <p className="text-slate-400 text-sm mt-1">
               לחץ על "רענון נתונים" להוספת מועמדים
             </p>
-          </motion.div>
-        ) : (
-          <div className="space-y-3">
+          </motion.div> :
+
+        <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {filteredCandidates.map((candidate, index) => (
-                <motion.div
-                  key={candidate.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: index * 0.05 }}
-                >
+              {filteredCandidates.map((candidate, index) =>
+            <motion.div
+              key={candidate.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ delay: index * 0.05 }}>
+
                   <CandidateCard
-                    candidate={candidate}
-                    onUpdate={handleUpdate}
-                  />
+                candidate={candidate}
+                onUpdate={handleUpdate} />
+
                 </motion.div>
-              ))}
+            )}
             </AnimatePresence>
           </div>
-        )}
+        }
       </main>
-    </div>
-  );
+    </div>);
+
 }
