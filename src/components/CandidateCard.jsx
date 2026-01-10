@@ -263,7 +263,35 @@ export default function CandidateCard({ candidate, onUpdate }) {
               <span className="text-slate-400 font-semibold min-w-[80px]">רכב/ניידות:</span>
               <span className="text-slate-200">{candidate.transportation || '-'}</span>
             </div>
-          </div>
+            {candidate.position === 'manager_commerce' && (
+              <>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">ניסיון בסחר/ניהול קטגוריות:</span>
+                  <span className="text-slate-200">{candidate.commerce_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">שליטה בקומקס:</span>
+                  <span className="text-slate-200">{candidate.comax_proficiency || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">בניית פלנוגרמות ונראות מדף:</span>
+                  <span className="text-slate-200">{candidate.planogram_skills || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">ניהול מו"מ מול ספקים:</span>
+                  <span className="text-slate-200">{candidate.supplier_negotiation || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">ניתוח דוח רווח והפסד:</span>
+                  <span className="text-slate-200">{candidate.pnl_analysis || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">זמינות:</span>
+                  <span className="text-slate-200">{candidate.availability || '-'}</span>
+                </div>
+              </>
+            )}
+            </div>
         </motion.div>
 
         {isSaving &&
