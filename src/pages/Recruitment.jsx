@@ -76,26 +76,38 @@ export default function Recruitment() {
       const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
-      // Fetch all 4 tabs with correct gids
+      // Fetch all 4 tabs - try using sheet names instead of gids
       const tabs = [
-      { name: "general", gid: "0" },
-      { name: "segan_tzoran", gid: "637665307" },
-      { name: "segan_beer_yaakov", gid: "691974204" },
-      { name: "manager_commerce", gid: "668402077" }];
+      { name: "general", sheetName: "עובדים כללי", gid: "0" },
+      { name: "segan_tzoran", sheetName: "סגן צורן", gid: "637665307" },
+      { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב", gid: "691974204" },
+      { name: "manager_commerce", sheetName: "מנהל סחר", gid: "668402077" }];
 
 
       for (const tab of tabs) {
         let csvText = null;
 
-        try {
-          const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`;
-          console.log(`Fetching ${tab.name} from gid=${tab.gid}`);
-          const response = await fetch(csvUrl);
-          csvText = await response.text();
-          console.log(`${tab.name}: Got ${csvText.length} chars`);
-        } catch (error) {
-          console.error(`Error fetching ${tab.name}:`, error);
-          continue;
+        // Try both gid and sheet name methods
+        const attempts = [
+          `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`,
+          `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab.sheetName)}`
+        ];
+
+        for (const url of attempts) {
+          try {
+            console.log(`Trying to fetch ${tab.name} from: ${url}`);
+            const response = await fetch(url);
+            csvText = await response.text();
+            console.log(`${tab.name}: Got ${csvText.length} chars`);
+            
+            // Check if we got unique data (not the default sheet)
+            if (csvText && csvText.length > 100) {
+              break;
+            }
+          } catch (error) {
+            console.error(`Error with ${url}:`, error);
+            continue;
+          }
         }
 
         if (!csvText || csvText.length < 10) continue;
