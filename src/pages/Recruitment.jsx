@@ -78,17 +78,6 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      const existing = await base44.entities.Candidate.list();
-      
-      // בניית מפה של טלפונים קיימים לפי תפקיד
-      const existingByPosition = {};
-      for (const c of existing || []) {
-        const pos = c.position;
-        if (!existingByPosition[pos]) existingByPosition[pos] = new Set();
-        const phone = String(c.phone || '').replace(/\D/g, '');
-        if (phone) existingByPosition[pos].add(phone);
-      }
-
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
         { name: "segan_tzoran", sheetName: "סגן צורן" },
@@ -97,11 +86,8 @@ export default function Recruitment() {
       ];
 
       const newCandidates = [];
-      let duplicates = 0;
 
       for (const tab of tabs) {
-        // סט טלפונים לתפקיד הנוכחי בלבד
-        const positionPhones = existingByPosition[tab.name] || new Set();
         
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
@@ -160,11 +146,7 @@ export default function Recruitment() {
           const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
           const cleaned = String(phoneRaw).replace(/\D/g, '');
 
-          // כפילות רק בתוך אותו תפקיד
-          if (cleaned && positionPhones.has(cleaned)) {
-            duplicates++;
-            continue;
-          }
+          // ללא סינון - מייבא הכל
 
           newCandidates.push({
             name,
@@ -185,7 +167,6 @@ export default function Recruitment() {
             sheet_row_id: `${tab.name}_${cleaned || Date.now()}_${Math.random().toString(36).slice(2,8)}`
           });
 
-          if (cleaned) positionPhones.add(cleaned);
         }
       }
 
@@ -194,7 +175,7 @@ export default function Recruitment() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      setImportMessage(`יובאו ${newCandidates.length} חדשים, דילג על ${duplicates} כפולים.`);
+      setImportMessage(`יובאו ${newCandidates.length} שורות.`);
       setTimeout(() => setImportMessage(null), 8000);
     } catch (e) {
       setImportMessage("שגיאה בייבוא נתונים.");
