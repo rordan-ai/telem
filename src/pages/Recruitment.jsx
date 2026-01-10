@@ -106,10 +106,17 @@ export default function Recruitment() {
           const headers = rows[0].map(h => h.toLowerCase().trim());
           console.log(`Tab ${tab.name} headers:`, headers);
           
-          const getIndex = (possibleNames) => headers.findIndex(h => possibleNames.some(name => h.includes(name)));
+          // Improved getIndex: prioritizes exact/specific matches in the order of possibleNames
+          const getIndex = (possibleNames) => {
+            for (const name of possibleNames) {
+              const index = headers.findIndex(h => h.includes(name));
+              if (index !== -1) return index;
+            }
+            return -1;
+          };
 
           const idx = {
-            name: getIndex(["שם מועמד", "שם", "שם מלא"]),
+            name: getIndex(["שם מועמד", "שם מלא", "שם"]),
             phone: getIndex(["טלפון", "נייד", "סלולרי"]),
             email: getIndex(["אימייל", "דואר"]),
             branch: getIndex(["מודעה", "סניף"]),
