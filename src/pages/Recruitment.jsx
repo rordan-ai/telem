@@ -110,56 +110,54 @@ export default function Recruitment() {
             continue;
           }
 
-          // Extract headers from first row
-          const firstRow = data[0];
-          const headers = Object.keys(firstRow).map(h => h.toLowerCase().trim());
+          // OpenSheet returns objects with column names as keys
+          const headers = Object.keys(data[0]);
           console.log(`Tab ${tab.name} headers:`, headers);
           
-          // Improved getIndex: prioritizes exact/specific matches in the order of possibleNames
-          const getIndex = (possibleNames) => {
-            for (const name of possibleNames) {
-              const index = headers.findIndex(h => h.includes(name));
-              if (index !== -1) return index;
+          // Find the actual column name that matches our search terms
+          const findColumn = (possibleNames) => {
+            for (const searchTerm of possibleNames) {
+              const found = headers.find(h => h.toLowerCase().includes(searchTerm.toLowerCase()));
+              if (found) return found;
             }
-            return -1;
+            return null;
           };
 
-          const idx = {
-            name: getIndex(["שם מועמד", "שם מלא", "שם"]),
-            phone: getIndex(["טלפון", "נייד", "סלולרי"]),
-            email: getIndex(["אימייל", "דואר", "מייל"]),
-            branch: getIndex(["מודעה", "סניף"]),
-            campaign: getIndex(["קמפיין"]),
-            time: getIndex(["תאריך", "שעה"]),
-            city: getIndex(["מגורים", "עיר", "ישוב"]),
-            exp: getIndex(["ניסיון"]),
-            job: getIndex(["משרה", "תפקיד"]),
-            expDesc: getIndex(["תאור", "תיאור"]),
-            working: getIndex(["עובד כרגע"]),
-            transport: getIndex(["רכב", "ניידות", "מרחק"]),
-            notes: getIndex(["הערות"])
+          const cols = {
+            name: findColumn(["שם מועמד", "שם מלא", "שם"]),
+            phone: findColumn(["טלפון", "נייד", "סלולרי"]),
+            email: findColumn(["אימייל", "דואר", "מייל"]),
+            branch: findColumn(["מודעה", "סניף"]),
+            campaign: findColumn(["קמפיין"]),
+            time: findColumn(["תאריך", "שעה"]),
+            city: findColumn(["מגורים", "עיר", "ישוב"]),
+            exp: findColumn(["ניסיון"]),
+            job: findColumn(["משרה", "תפקיד"]),
+            expDesc: findColumn(["תאור", "תיאור"]),
+            working: findColumn(["עובד כרגע"]),
+            transport: findColumn(["רכב", "ניידות", "מרחק"]),
+            notes: findColumn(["הערות"])
           };
           
-          console.log(`Tab ${tab.name} column mapping:`, idx);
+          console.log(`Tab ${tab.name} column mapping:`, cols);
 
-          if (idx.name === -1 || idx.phone === -1) {
-            console.error(`Missing required columns in ${tab.name}. Name index: ${idx.name}, Phone index: ${idx.phone}`);
+          if (!cols.name || !cols.phone) {
+            console.error(`Missing required columns in ${tab.name}. Name: ${cols.name}, Phone: ${cols.phone}`);
             continue;
           }
 
           let duplicateCount = 0;
 
           for (const row of data) {
-            const rowValues = Object.values(row);
-            const name = rowValues[idx.name];
-            const phone = rowValues[idx.phone];
+            const name = row[cols.name];
+            const phone = row[cols.phone];
             
             // Only skip if name or phone is missing - these are required fields
             if (!name || !phone) {
               continue;
             }
 
-            const cleanPhone = phone.replace(/\D/g, "");
+            const cleanPhone = String(phone).replace(/\D/g, "");
             // Only skip if phone is invalid format
             if (!cleanPhone || cleanPhone.length < 9) {
               continue;
@@ -171,24 +169,22 @@ export default function Recruitment() {
                continue;
             }
 
-            const notes = idx.notes !== -1 ? rowValues[idx.notes] : "";
-
             newCandidates.push({
-              name,
-              phone,
-              email: idx.email !== -1 ? rowValues[idx.email] : "",
+              name: String(name),
+              phone: String(phone),
+              email: cols.email ? String(row[cols.email] || "") : "",
               position: tab.name,
-              branch: idx.branch !== -1 ? rowValues[idx.branch] : "",
-              campaign: idx.campaign !== -1 ? rowValues[idx.campaign] : "",
-              contact_time: idx.time !== -1 ? rowValues[idx.time] : "",
-              city: idx.city !== -1 ? rowValues[idx.city] : "",
-              has_experience: idx.exp !== -1 ? rowValues[idx.exp] : "",
-              job_title: idx.job !== -1 ? rowValues[idx.job] : "",
-              experience_description: idx.expDesc !== -1 ? rowValues[idx.expDesc] : "",
-              currently_working: idx.working !== -1 ? rowValues[idx.working] : "",
-              transportation: idx.transport !== -1 ? rowValues[idx.transport] : "",
+              branch: cols.branch ? String(row[cols.branch] || "") : "",
+              campaign: cols.campaign ? String(row[cols.campaign] || "") : "",
+              contact_time: cols.time ? String(row[cols.time] || "") : "",
+              city: cols.city ? String(row[cols.city] || "") : "",
+              has_experience: cols.exp ? String(row[cols.exp] || "") : "",
+              job_title: cols.job ? String(row[cols.job] || "") : "",
+              experience_description: cols.expDesc ? String(row[cols.expDesc] || "") : "",
+              currently_working: cols.working ? String(row[cols.working] || "") : "",
+              transportation: cols.transport ? String(row[cols.transport] || "") : "",
               status: "not_handled",
-              notes,
+              notes: cols.notes ? String(row[cols.notes] || "") : "",
               sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
             });
 
