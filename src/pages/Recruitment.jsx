@@ -100,10 +100,10 @@ export default function Recruitment() {
         if (!csvText) continue;
 
         try {
-          const lines = csvText.split("\n").filter(line => line.trim());
-          if (lines.length < 2) continue;
+          const rows = parseCSV(csvText);
+          if (rows.length < 2) continue;
 
-          const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, "").toLowerCase());
+          const headers = rows[0].map(h => h.replace(/"/g, "").toLowerCase());
           const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
           const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
           const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
