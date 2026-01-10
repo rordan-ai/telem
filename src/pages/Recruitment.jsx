@@ -199,10 +199,20 @@ export default function Recruitment() {
         }
       }
 
+      // Handle new candidates
       if (newCandidates.length > 0) {
         await base44.entities.Candidate.bulkCreate(newCandidates);
-        queryClient.invalidateQueries({ queryKey: ["candidates"] });
       }
+
+      // Handle deleted candidates - remove those not in the current sheet
+      const sheetsPhones = new Set(newCandidates.map(c => c.phone.replace(/\D/g, "")));
+      const candidatesToDelete = existingCandidates.filter(c => !sheetsPhones.has(c.phone.replace(/\D/g, "")));
+      
+      for (const candidate of candidatesToDelete) {
+        await base44.entities.Candidate.delete(candidate.id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
 
       // Generate detailed report
       const stats = tabs.map(t => {
@@ -210,7 +220,8 @@ export default function Recruitment() {
         return `${t.sheetName}: ${count}`;
       }).join(" | ");
       
-      setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים שנמצאו. (${stats})`);
+      const deletedMsg = candidatesToDelete.length > 0 ? `, ${candidatesToDelete.length} נמחקו` : "";
+      setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים${deletedMsg}. (${stats})`);
       setTimeout(() => setImportMessage(null), 10000);
 
     } catch (error) {
