@@ -223,10 +223,7 @@ export default function Recruitment() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      const msg = toCreate.length > 0 
-        ? `נוספו ${toCreate.length} מועמדים חדשים` 
-        : `הנתונים מעודכנים (${existing.length} מועמדים)`;
-      setImportMessage(msg);
+      setImportMessage("הנתונים עודכנו");
       setTimeout(() => setImportMessage(null), 8000);
     } catch (e) {
       console.error("Import error:", e);
