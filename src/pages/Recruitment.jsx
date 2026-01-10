@@ -78,13 +78,11 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // שליפת מועמדים קיימים
+      // מחיקת כל המועמדים הקיימים - התחלה נקייה
       const existing = await base44.entities.Candidate.list();
-      const existingMap = new Map();
-      existing.forEach(c => {
-        const key = `${c.phone}_${c.position}`;
-        existingMap.set(key, c);
-      });
+      for (const c of existing) {
+        await base44.entities.Candidate.delete(c.id);
+      }
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -94,7 +92,6 @@ export default function Recruitment() {
       ];
 
       const toCreate = [];
-      const sheetKeys = new Set(); // כל המפתחות מהגיליון
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
@@ -159,19 +156,11 @@ export default function Recruitment() {
           availability: tab.name === "manager_commerce" ? 7 : -1
         };
 
+        // ייבוא כל שורה מהגיליון ללא שום בדיקה
         for (const row of rows.slice(1)) {
-          const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
-          const key = `${phoneRaw}_${tab.name}`;
-          
-          // שמירת המפתח לצורך זיהוי מחיקות
-          sheetKeys.add(key);
-
-          // דילוג על מועמדים שכבר קיימים - עבודה על השוליים בלבד
-          if (existingMap.has(key)) continue;
-
           const candidateData = {
             name: idx.name !== -1 ? String(row[idx.name] ?? '') : '',
-            phone: phoneRaw,
+            phone: idx.phone !== -1 ? String(row[idx.phone] ?? '') : '',
             email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
             position: tab.name,
             branch: idx.branch !== -1 ? String(row[idx.branch] ?? '') : '',
@@ -200,20 +189,7 @@ export default function Recruitment() {
         }
       }
 
-      // מחיקת מועמדים שלא קיימים בגיליון
-      const toDelete = existing.filter(c => {
-        const key = `${c.phone}_${c.position}`;
-        return !sheetKeys.has(key);
-      });
-
-      // מחיקה בקבוצות
-      if (toDelete.length > 0) {
-        for (const c of toDelete) {
-          await base44.entities.Candidate.delete(c.id);
-        }
-      }
-
-      // הוספה בקבוצות
+      // הוספת כל המועמדים מהגיליון
       if (toCreate.length > 0) {
         const batchSize = 25;
         for (let i = 0; i < toCreate.length; i += batchSize) {
