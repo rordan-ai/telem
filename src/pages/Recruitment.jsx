@@ -26,6 +26,47 @@ export default function Recruitment() {
 
 
 
+  // Robust CSV Parser that handles multi-line cells correctly
+  const parseCSV = (text) => {
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let insideQuote = false;
+    
+    // Normalize newlines to avoid platform specific issues
+    const input = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
+    for (let i = 0; i < input.length; i++) {
+      const char = input[i];
+      const nextChar = input[i + 1];
+      
+      if (char === '"') {
+        if (insideQuote && nextChar === '"') {
+          cell += '"';
+          i++; // Skip escape
+        } else {
+          insideQuote = !insideQuote;
+        }
+      } else if (char === ',' && !insideQuote) {
+        row.push(cell.trim());
+        cell = "";
+      } else if (char === '\n' && !insideQuote) {
+        row.push(cell.trim());
+        if (row.some(c => c)) rows.push(row);
+        row = [];
+        cell = "";
+      } else {
+        cell += char;
+      }
+    }
+    
+    // Add the last row if it exists
+    row.push(cell.trim());
+    if (row.some(c => c)) rows.push(row);
+    
+    return rows;
+  };
+
   const fetchAndImport = async () => {
     setIsImporting(true);
 
@@ -43,27 +84,47 @@ export default function Recruitment() {
 
       for (const tab of tabs) {
         try {
-          const url = `https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(tab.sheetName)}`;
+          // Use Google Viz API for reliable CSV export by sheet name
+          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab.sheetName)}`;
           console.log(`Fetching ${tab.name} from: ${url}`);
+          
           const response = await fetch(url);
           if (!response.ok) continue;
           
-          const data = await response.json();
-          if (!Array.isArray(data)) continue;
+          const csvText = await response.text();
+          const rows = parseCSV(csvText);
+          
+          if (rows.length < 2) continue; // No data found or just headers
 
-          console.log(`${tab.name}: Got ${data.length} rows`);
+          // Dynamic header mapping
+          const headers = rows[0].map(h => h.toLowerCase().trim());
+          const getIndex = (possibleNames) => headers.findIndex(h => possibleNames.some(name => h.includes(name)));
 
-          for (const row of data) {
-            // Helper to find value by possible keys
-            const getValue = (keys) => {
-              for (const key of keys) {
-                if (row[key] !== undefined) return row[key];
-              }
-              return "";
-            };
+          const idx = {
+            name: getIndex(["שם מועמד", "שם"]),
+            phone: getIndex(["טלפון", "נייד"]),
+            email: getIndex(["אימייל", "דואר"]),
+            branch: getIndex(["מודעה", "סניף"]),
+            campaign: getIndex(["קמפיין"]),
+            time: getIndex(["תאריך", "שעה"]),
+            city: getIndex(["מגורים", "עיר", "ישוב"]),
+            exp: getIndex(["ניסיון"]),
+            job: getIndex(["משרה", "תפקיד"]),
+            expDesc: getIndex(["תאור", "תיאור"]),
+            working: getIndex(["עובד כרגע"]),
+            transport: getIndex(["רכב", "ניידות", "מרחק"]),
+            notes: getIndex(["הערות"])
+          };
 
-            const name = getValue(["שם מועמד", "שם ", "שם"]).trim();
-            const phone = getValue(["טלפון", "נייד"]).trim();
+          if (idx.name === -1 || idx.phone === -1) {
+            console.error(`Missing required columns in ${tab.name}`);
+            continue;
+          }
+
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const name = row[idx.name];
+            const phone = row[idx.phone];
             
             if (!name || !phone) continue;
 
@@ -71,35 +132,27 @@ export default function Recruitment() {
             if (!cleanPhone || cleanPhone.length < 9) continue;
             if (existingPhones.has(cleanPhone)) continue;
 
-            const email = getValue(["אימייל", "דואר אלקטרוני"]).trim();
-            const branch = getValue(["מודעה", " מועמדות לסניף"]).trim();
-            const campaign = getValue(["שם הקמפיין"]).trim();
-            const contactTime = getValue(["תאריך ושעה"]).trim();
-            const city = getValue(["ישוב מגורים", "מגורים", "עיר"]).trim();
-            const hasExperience = getValue(["האם יש ניסיון ", "ניסיון"]).trim();
-            const jobTitle = getValue(["מועמד למשרה"]).trim();
-            const experienceDesc = getValue(["תאור קצר ניסיון", "תאור קצר"]).trim();
-            const currentlyWorking = getValue(["עובד כרגע?"]).trim();
-            const transportation = getValue(["רכב/ניידות ", "רכב ", "מרחק"]).trim();
-            const notes = getValue(["הערות ", "הערות", "הערות נוסף"]).trim();
+            // Handle notes: combine regular notes + extra columns if they look like notes or just the main note
+            // Sometimes sheets have multiple note columns, but we'll stick to the found one for now
+            const notes = idx.notes !== -1 ? row[idx.notes] : "";
 
             newCandidates.push({
               name,
               phone,
-              email,
+              email: idx.email !== -1 ? row[idx.email] : "",
               position: tab.name,
-              branch,
-              campaign,
-              contact_time: contactTime,
-              city,
-              has_experience: hasExperience,
-              job_title: jobTitle,
-              experience_description: experienceDesc,
-              currently_working: currentlyWorking,
-              transportation,
+              branch: idx.branch !== -1 ? row[idx.branch] : "",
+              campaign: idx.campaign !== -1 ? row[idx.campaign] : "",
+              contact_time: idx.time !== -1 ? row[idx.time] : "",
+              city: idx.city !== -1 ? row[idx.city] : "",
+              has_experience: idx.exp !== -1 ? row[idx.exp] : "",
+              job_title: idx.job !== -1 ? row[idx.job] : "",
+              experience_description: idx.expDesc !== -1 ? row[idx.expDesc] : "",
+              currently_working: idx.working !== -1 ? row[idx.working] : "",
+              transportation: idx.transport !== -1 ? row[idx.transport] : "",
               status: "not_handled",
               notes,
-              sheet_row_id: `${tab.name}_${cleanPhone}`
+              sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
             });
 
             existingPhones.add(cleanPhone);
