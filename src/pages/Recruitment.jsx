@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
-import ImportReport from "../components/ImportReport";
 
 const SHEET_ID = "12MZERyehuXxMUix9LYQSpdjespJ2bpDx1nyQYG-M4N4";
 
@@ -16,7 +15,6 @@ export default function Recruitment() {
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [importReport, setImportReport] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: candidates = [], isLoading } = useQuery({
@@ -77,27 +75,11 @@ export default function Recruitment() {
 
   const fetchAndImport = async () => {
     setIsImporting(true);
-
     try {
-      const report = {
-        tabs: [],
-        total: {
-          imported: 0,
-          skipped: 0,
-          reasons: {
-            duplicate: 0,
-            missing_required: 0,
-            invalid_phone: 0,
-            missing_required_columns: 0,
-            fetch_failed: 0,
-            no_data_rows: 0
-          }
-        }
-      };
+      // Fetch existing candidates to deduplicate by phone
       const existingCandidates = await base44.entities.Candidate.list();
-      const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
+      const existingPhones = new Set(existingCandidates.map((c) => String(c.phone || "").replace(/\D/g, "")));
       const newCandidates = [];
-      let totalDuplicates = 0;
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -106,217 +88,106 @@ export default function Recruitment() {
         { name: "manager_commerce", sheetName: "מנהל סחר" }
       ];
 
+      const normalizeHeader = (t) => String(t || '')
+        .replace(/\uFEFF/g, '')
+        .replace(/[\u200B-\u200D\u2060]/g, '')
+        .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const findIndexSmart = (headers, names) => {
+        for (const n of names) {
+          const exact = headers.findIndex((h) => String(h).trim() === n);
+          if (exact !== -1) return exact;
+        }
+        for (const n of names) {
+          const idx = headers.findIndex((h) => String(h).toLowerCase().includes(n.toLowerCase()));
+          if (idx !== -1) return idx;
+        }
+        return -1;
+      };
+
+      const findIndexName = (headers) => {
+        let exact = headers.findIndex((h) => h === "שם מועמד" || h === "שם מלא");
+        if (exact !== -1) return exact;
+        let incl = headers.findIndex((h) => h.includes("מועמד") || h.includes("שם מלא"));
+        if (incl !== -1) return incl;
+        let generic = headers.findIndex((h) => h.startsWith("שם") && !h.includes("קמפיין"));
+        return generic;
+      };
+
       for (const tab of tabs) {
-        const tabReport = {
-          name: tab.name,
-          sheetName: tab.sheetName,
-          fetchedRows: 0,
-          imported: 0,
-          skipped: 0,
-          reasons: {
-            duplicate: 0,
-            missing_required: 0,
-            invalid_phone: 0,
-            missing_required_columns: 0,
-            fetch_failed: 0,
-            no_data_rows: 0
-          }
+        const sheetNameEncoded = encodeURIComponent(tab.sheetName);
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const csvText = await res.text();
+        const rows = parseCSV(csvText);
+        if (!rows || rows.length < 2) continue;
+
+        const headers = rows[0].map(normalizeHeader);
+        const idx = {
+          name: findIndexName(headers),
+          phone: findIndexSmart(headers, ["טלפון", "נייד", "סלולרי"]),
+          email: findIndexSmart(headers, ["אימייל", "דואר", "מייל"]),
+          branch: findIndexSmart(headers, ["מודעה", "סניף", "מועמדות לסניף"]),
+          campaign: findIndexSmart(headers, ["שם הקמפיין", "קמפיין"]),
+          time: findIndexSmart(headers, ["תאריך ושעה", "תאריך", "שעה"]),
+          city: findIndexSmart(headers, ["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
+          exp: findIndexSmart(headers, ["האם יש ניסיון", "ניסיון"]),
+          job: findIndexSmart(headers, ["מועמד למשרה", "משרה", "תפקיד"]),
+          expDesc: findIndexSmart(headers, ["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
+          working: findIndexSmart(headers, ["עובד כרגע?", "עובד כרגע"]),
+          transport: findIndexSmart(headers, ["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
+          notes: findIndexSmart(headers, ["הערות"])
         };
-        try {
-          // Fetch via Google Sheets CSV (more reliable and CORS-friendly)
-          const sheetNameEncoded = encodeURIComponent(tab.sheetName);
-          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
-          console.log(`Fetching ${tab.name} from: ${url}`);
 
-          const response = await fetch(url);
-          if (!response.ok) {
-            console.error(`Failed to fetch ${tab.name}:`, response.status);
-            tabReport.reasons.fetch_failed += 1;
-            report.tabs.push(tabReport);
-            continue;
-          }
+        if (idx.name === -1 || idx.phone === -1) continue;
 
-          const csvText = await response.text();
-          console.log(`Tab ${tab.name}: fetched ${csvText.length} chars`);
+        for (const row of rows.slice(1)) {
+          if (!row || row.every((c) => !String(c || '').trim())) continue;
+          const name = row[idx.name];
+          const phone = row[idx.phone];
+          if (!name || !phone) continue;
+          const cleanPhone = String(phone).replace(/\D/g, "");
+          if (!cleanPhone || cleanPhone.length < 9) continue;
+          if (existingPhones.has(cleanPhone)) continue;
 
-          const rows = parseCSV(csvText);
-          console.log(`Tab ${tab.name}: parsed ${rows.length} rows`);
-
-          tabReport.fetchedRows = Math.max(0, rows.length - 1);
-
-          if (!rows || rows.length < 2) {
-            console.warn(`Tab ${tab.name}: No data rows returned`);
-            tabReport.reasons.no_data_rows += 1;
-            report.tabs.push(tabReport);
-            continue;
-          }
-
-          const normalizeHeader = (t) => String(t || '')
-            .replace(/\uFEFF/g, '')
-            .replace(/[\u200B-\u200D\u2060]/g, '')
-            .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
-            .replace(/\u00A0/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-          const headers = rows[0].map(normalizeHeader);
-          console.log(`Tab ${tab.name} headers:`, headers);
-
-          // Prefer exact Hebrew header matches first, then fallback to contains
-          const findIndexSmart = (possibleNames) => {
-            for (const name of possibleNames) {
-              const exact = headers.findIndex(h => String(h).trim() === name);
-              if (exact !== -1) return exact;
-            }
-            for (const name of possibleNames) {
-              const idx = headers.findIndex(h => String(h).toLowerCase().includes(name.toLowerCase()));
-              if (idx !== -1) return idx;
-            }
-            return -1;
-          };
-
-          const findIndexName = () => {
-            // 1) exact preferred
-            let exact = headers.findIndex(h => h === "שם מועמד" || h === "שם מלא");
-            if (exact !== -1) return exact;
-            // 2) includes tokens implying candidate name
-            let incl = headers.findIndex(h => h.includes("מועמד") || h.includes("שם מלא"));
-            if (incl !== -1) return incl;
-            // 3) fallback: starts with 'שם' but not campaign
-            let generic = headers.findIndex(h => h.startsWith("שם") && !h.includes("קמפיין"));
-            return generic;
-          };
-
-          const idx = {
-            name: findIndexName(),
-            phone: findIndexSmart(["טלפון", "נייד", "סלולרי"]),
-            email: findIndexSmart(["אימייל", "דואר", "מייל"]),
-            branch: findIndexSmart(["מודעה", "סניף", "מועמדות לסניף"]),
-            campaign: findIndexSmart(["שם הקמפיין", "קמפיין"]),
-            time: findIndexSmart(["תאריך ושעה", "תאריך", "שעה"]),
-            city: findIndexSmart(["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
-            exp: findIndexSmart(["האם יש ניסיון", "ניסיון"]),
-            job: findIndexSmart(["מועמד למשרה", "משרה", "תפקיד"]),
-            expDesc: findIndexSmart(["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
-            working: findIndexSmart(["עובד כרגע?", "עובד כרגע"]),
-            transport: findIndexSmart(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
-            notes: findIndexSmart(["הערות"])
-          };
-
-          console.log(`Tab ${tab.name} column mapping:`, idx);
-
-          if (idx.name === -1 || idx.phone === -1) {
-            console.error(`Missing required columns in ${tab.name}. Name index: ${idx.name}, Phone index: ${idx.phone}`);
-            tabReport.reasons.missing_required_columns += tabReport.fetchedRows;
-            tabReport.skipped += tabReport.fetchedRows;
-            report.tabs.push(tabReport);
-            continue;
-          }
-
-          let duplicateCount = 0;
-
-          for (const row of rows.slice(1)) {
-            const name = row[idx.name];
-            const phone = row[idx.phone];
-
-            // Only skip if name or phone is missing - these are required fields
-            if (!name || !phone) {
-              tabReport.reasons.missing_required += 1;
-              tabReport.skipped += 1;
-              continue;
-            }
-
-            const cleanPhone = String(phone).replace(/\D/g, "");
-            // Only skip if phone is invalid format
-            if (!cleanPhone || cleanPhone.length < 9) {
-              tabReport.reasons.invalid_phone += 1;
-              tabReport.skipped += 1;
-              continue;
-            }
-
-            if (existingPhones.has(cleanPhone)) {
-               duplicateCount++;
-               totalDuplicates++;
-               tabReport.reasons.duplicate += 1;
-               tabReport.skipped += 1;
-               continue;
-            }
-
-            newCandidates.push({
-              name: String(name),
-              phone: String(phone),
-              email: idx.email !== -1 ? String(row[idx.email] || "") : "",
-              position: tab.name,
-              branch: idx.branch !== -1 ? String(row[idx.branch] || "") : "",
-              campaign: idx.campaign !== -1 ? String(row[idx.campaign] || "") : "",
-              contact_time: idx.time !== -1 ? String(row[idx.time] || "") : "",
-              city: idx.city !== -1 ? String(row[idx.city] || "") : "",
-              has_experience: idx.exp !== -1 ? String(row[idx.exp] || "") : "",
-              job_title: idx.job !== -1 ? String(row[idx.job] || "") : "",
-              experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] || "") : "",
-              currently_working: idx.working !== -1 ? String(row[idx.working] || "") : "",
-              transportation: idx.transport !== -1 ? String(row[idx.transport] || "") : "",
-              status: "not_handled",
-              notes: idx.notes !== -1 ? String(row[idx.notes] || "") : "",
-              sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
-            });
-
-            tabReport.imported += 1;
-            existingPhones.add(cleanPhone);
-          }
-
-          report.tabs.push(tabReport);
-        } catch (tabError) {
-          console.error(`Error fetching ${tab.name} tab:`, tabError);
-          // Count as fetch failure if we didn't already push
-          // Push minimal info so the report shows the tab
-          const minimal = {
-            name: tab.name,
-            sheetName: tab.sheetName,
-            fetchedRows: 0,
-            imported: 0,
-            skipped: 0,
-            reasons: { duplicate: 0, missing_required: 0, invalid_phone: 0, missing_required_columns: 0, fetch_failed: 1, no_data_rows: 0 }
-          };
-          report.tabs.push(minimal);
+          newCandidates.push({
+            name: String(name),
+            phone: String(phone),
+            email: idx.email !== -1 ? String(row[idx.email] || "") : "",
+            position: tab.name,
+            branch: idx.branch !== -1 ? String(row[idx.branch] || "") : "",
+            campaign: idx.campaign !== -1 ? String(row[idx.campaign] || "") : "",
+            contact_time: idx.time !== -1 ? String(row[idx.time] || "") : "",
+            city: idx.city !== -1 ? String(row[idx.city] || "") : "",
+            has_experience: idx.exp !== -1 ? String(row[idx.exp] || "") : "",
+            job_title: idx.job !== -1 ? String(row[idx.job] || "") : "",
+            experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] || "") : "",
+            currently_working: idx.working !== -1 ? String(row[idx.working] || "") : "",
+            transportation: idx.transport !== -1 ? String(row[idx.transport] || "") : "",
+            status: "not_handled",
+            notes: idx.notes !== -1 ? String(row[idx.notes] || "") : "",
+            sheet_row_id: `${tab.name}_${cleanPhone}_${Date.now()}`
+          });
+          existingPhones.add(cleanPhone);
         }
       }
 
-      // Handle new candidates
       if (newCandidates.length > 0) {
         await base44.entities.Candidate.bulkCreate(newCandidates);
       }
 
-      // Build totals for the report
-      report.total.imported = report.tabs.reduce((sum, t) => sum + (t.imported || 0), 0);
-      report.total.skipped = report.tabs.reduce((sum, t) => sum + (t.skipped || 0), 0);
-      // Sum reasons
-      for (const t of report.tabs) {
-        for (const key of Object.keys(report.total.reasons)) {
-          report.total.reasons[key] += t.reasons?.[key] || 0;
-        }
-      }
-      setImportReport(report);
-
-      queryClient.invalidateQueries({ queryKey: ["candidates"] });
-
-      // Generate detailed report
-      const stats = tabs.map(t => {
-        const count = newCandidates.filter(c => c.position === t.name).length;
-        return `${t.sheetName}: ${count}`;
-      }).join(" | ");
-
-      setImportMessage(`סיום: ${newCandidates.length} חדשים, ${totalDuplicates} כפולים. (${stats})`);
-      setTimeout(() => setImportMessage(null), 10000);
-
-    } catch (error) {
-      console.error("Import error:", error);
-      setImportMessage("שגיאה ביבוא נתונים: " + error.message);
-      // expose minimal report even on total failure
-      setImportReport({ tabs: [], total: { imported: 0, skipped: 0, reasons: { duplicate: 0, missing_required: 0, invalid_phone: 0, missing_required_columns: 0, fetch_failed: 1, no_data_rows: 0 } } });
+      setImportMessage(`יובאו ${newCandidates.length} מועמדים חדשים`);
+      setTimeout(() => setImportMessage(null), 8000);
+      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+    } catch (e) {
+      setImportMessage("שגיאה בייבוא: " + (e?.message || e));
     }
-
     setIsImporting(false);
-    };
+  };
 
 
 
@@ -412,7 +283,7 @@ export default function Recruitment() {
             </motion.div>
           }
 
-          {importReport && <ImportReport report={importReport} />}
+
         </div>
 
         {/* Stats */}
