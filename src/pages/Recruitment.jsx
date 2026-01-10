@@ -78,11 +78,13 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // מחיקת כל המועמדים הקיימים לפני ייבוא חדש - סנכרון מלא 1:1
+      // שליפת מועמדים קיימים
       const existing = await base44.entities.Candidate.list();
-      for (const c of existing) {
-        await base44.entities.Candidate.delete(c.id);
-      }
+      const existingMap = new Map();
+      existing.forEach(c => {
+        const key = `${c.phone}_${c.position}`;
+        existingMap.set(key, c);
+      });
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -92,6 +94,7 @@ export default function Recruitment() {
       ];
 
       const toCreate = [];
+      const sheetKeys = new Set(); // כל המפתחות מהגיליון
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
@@ -156,11 +159,19 @@ export default function Recruitment() {
           availability: tab.name === "manager_commerce" ? 7 : -1
         };
 
-        // ייבוא כל שורה ללא שום בדיקה - 1:1 מהגיליון
         for (const row of rows.slice(1)) {
+          const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
+          const key = `${phoneRaw}_${tab.name}`;
+          
+          // שמירת המפתח לצורך זיהוי מחיקות
+          sheetKeys.add(key);
+
+          // הוספה רק אם לא קיים
+          if (existingMap.has(key)) continue;
+
           const candidateData = {
             name: idx.name !== -1 ? String(row[idx.name] ?? '') : '',
-            phone: idx.phone !== -1 ? String(row[idx.phone] ?? '') : '',
+            phone: phoneRaw,
             email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
             position: tab.name,
             branch: idx.branch !== -1 ? String(row[idx.branch] ?? '') : '',
@@ -189,7 +200,20 @@ export default function Recruitment() {
         }
       }
 
-      // ייבוא הכל בקבוצות
+      // מחיקת מועמדים שלא קיימים בגיליון
+      const toDelete = existing.filter(c => {
+        const key = `${c.phone}_${c.position}`;
+        return !sheetKeys.has(key);
+      });
+
+      // מחיקה בקבוצות
+      if (toDelete.length > 0) {
+        for (const c of toDelete) {
+          await base44.entities.Candidate.delete(c.id);
+        }
+      }
+
+      // הוספה בקבוצות
       if (toCreate.length > 0) {
         const batchSize = 25;
         for (let i = 0; i < toCreate.length; i += batchSize) {
