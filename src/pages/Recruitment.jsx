@@ -184,25 +184,23 @@ export default function Recruitment() {
           availability: tab.name === "manager_commerce" ? 7 : -1
         };
 
+        // אסוף את כל הטלפונים מהגיליון (ללא ניקוי!) לצורך סנכרון מחיקות
+        const sheetPhones = new Set();
+        
         for (const row of rows.slice(1)) {
           const name = idx.name !== -1 ? String(row[idx.name] ?? '') : '';
           const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
-          const cleaned = String(phoneRaw).replace(/\D/g, '');
 
-          // מפתח ייחודי - טלפון + תפקיד
-          const key = `${cleaned}_${tab.name}`;
+          // מפתח ייחודי - טלפון כמו שהוא + תפקיד (ללא ניקוי!)
+          const key = `${phoneRaw}_${tab.name}`;
+          
+          // שמור לסנכרון מחיקות
+          sheetPhones.add(phoneRaw);
 
-          // דילוג על קיימים
+          // דילוג על קיימים בלבד (ללא בדיקת כפילויות!)
           if (existingMap.has(key)) {
-            skippedExisting++;
             continue;
           }
-          // דילוג על כפילויות בגיליון
-          if (seenKeys.has(key)) {
-            skippedDupe++;
-            continue;
-          }
-          seenKeys.add(key);
           addedCount++;
 
           const candidateData = {
@@ -221,7 +219,7 @@ export default function Recruitment() {
             transportation: idx.transport !== -1 ? String(row[idx.transport] ?? '') : '',
             status: "not_handled",
             notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : '',
-            sheet_row_id: `${tab.name}_${cleaned}_${Date.now()}`
+            sheet_row_id: `${tab.name}_${phoneRaw}_${Date.now()}`
           };
           
           // שדות נוספים למנהל סחר בלבד
@@ -235,29 +233,20 @@ export default function Recruitment() {
           }
 
           toCreate.push(candidateData);
-          }
+        }
 
-          // סנכרון מחיקות - רק לסגן באר יעקב (אחרי שסיימנו לעבור על כל השורות)
-          if (tab.name === "segan_beer_yaakov") {
-          // אסוף את כל מספרי הטלפון מהגיליון
-          const sheetPhoneKeys = new Set();
-          for (const row of rows.slice(1)) {
-            const phoneRaw = idx.phone !== -1 ? String(row[idx.phone] ?? '') : '';
-            const cleaned = String(phoneRaw).replace(/\D/g, '');
-            if (cleaned) {
-              sheetPhoneKeys.add(`${cleaned}_${tab.name}`);
-            }
-          }
+        // סנכרון מחיקות - רק לסגן באר יעקב
+        if (tab.name === "segan_beer_yaakov") {
           // מצא מועמדים שקיימים באפליקציה אבל לא בגיליון
-          for (const [key, candidate] of existingMap.entries()) {
-            if (candidate.position === "segan_beer_yaakov" && !sheetPhoneKeys.has(key)) {
+          for (const candidate of existing) {
+            if (candidate.position === "segan_beer_yaakov" && !sheetPhones.has(candidate.phone)) {
               toDelete.push(candidate.id);
             }
           }
-          }
+        }
 
-          debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים, ${skippedExisting} קיימים, ${skippedDupe} כפולים`);
-          }
+        debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים`);
+      }
 
             console.log("=== דוח ייבוא ===");
             debugInfo.forEach(line => console.log(line));
