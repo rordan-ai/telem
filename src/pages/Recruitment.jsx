@@ -151,7 +151,13 @@ export default function Recruitment() {
             continue;
           }
 
-          const normalizeHeader = (t) => String(t || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+          const normalizeHeader = (t) => String(t || '')
+            .replace(/\uFEFF/g, '')
+            .replace(/[\u200B-\u200D\u2060]/g, '')
+            .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
           const headers = rows[0].map(normalizeHeader);
           console.log(`Tab ${tab.name} headers:`, headers);
 
@@ -168,8 +174,20 @@ export default function Recruitment() {
             return -1;
           };
 
+          const findIndexName = () => {
+            // 1) exact preferred
+            let exact = headers.findIndex(h => h === "שם מועמד" || h === "שם מלא");
+            if (exact !== -1) return exact;
+            // 2) includes tokens implying candidate name
+            let incl = headers.findIndex(h => h.includes("מועמד") || h.includes("שם מלא"));
+            if (incl !== -1) return incl;
+            // 3) fallback: starts with 'שם' but not campaign
+            let generic = headers.findIndex(h => h.startsWith("שם") && !h.includes("קמפיין"));
+            return generic;
+          };
+
           const idx = {
-            name: findIndexSmart(["שם מועמד", "שם מלא", "שם"]),
+            name: findIndexName(),
             phone: findIndexSmart(["טלפון", "נייד", "סלולרי"]),
             email: findIndexSmart(["אימייל", "דואר", "מייל"]),
             branch: findIndexSmart(["מודעה", "סניף", "מועמדות לסניף"]),
