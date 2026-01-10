@@ -78,13 +78,16 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // שליפת מועמדים קיימים - ניצור מפה לפי טלפון+תפקיד
+      // שליפת מועמדים קיימים - ניצור מפה לפי טלפון+תפקיד (ללא ניקוי!)
       const existing = await base44.entities.Candidate.list();
       const existingMap = new Map();
       existing.forEach(c => {
-        const key = `${c.phone?.replace(/\D/g, '')}_${c.position}`;
+        const key = `${c.phone || ''}_${c.position}`;
         existingMap.set(key, c);
       });
+      // מפה נוספת לפי ID לסנכרון מחיקות
+      const existingById = new Map();
+      existing.forEach(c => existingById.set(c.id, c));
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
