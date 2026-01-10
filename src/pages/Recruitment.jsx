@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, RefreshCw } from "lucide-react";
+import { Users, Loader2, RefreshCw, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
 
@@ -34,13 +35,13 @@ export default function Recruitment() {
       if (char === '"') {
         inQuotes = !inQuotes;
       } else if (char === "," && !inQuotes) {
-        result.push(current);
+        result.push(current.replace(/^"/, "").replace(/"$/, ""));
         current = "";
       } else {
         current += char;
       }
     }
-    result.push(current);
+    result.push(current.replace(/^"/, "").replace(/"$/, ""));
     return result;
   };
 
@@ -79,7 +80,7 @@ export default function Recruitment() {
           const lines = csvText.split("\n").filter(line => line.trim());
           if (lines.length < 2) continue;
 
-          const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+          const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, "").toLowerCase());
           const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
           const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד"));
           const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך"));
@@ -177,22 +178,39 @@ export default function Recruitment() {
 
       {/* Main Content */}
       <main className="max-w-lg mx-auto px-4 py-6">
-        {/* Auto-sync indicator */}
-        {(isImporting || importMessage) && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-100"
+        {/* Import button and status */}
+        <div className="mb-4 space-y-3">
+          <Button
+            onClick={fetchAndImport}
+            disabled={isImporting}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
           >
-            <div className="flex items-center justify-center gap-2 text-sm text-emerald-700">
-              {isImporting && <RefreshCw className="w-4 h-4 animate-spin" />}
-              <span className="font-medium">
-                {isImporting ? "מסנכרן עם גוגל שיטס..." : importMessage}
-              </span>
-            </div>
-          </motion.div>
-        )}
+            {isImporting ? (
+              <>
+                <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                מייבא מהגיליון...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 ml-2" />
+                ייבוא מגוגל שיטס
+              </>
+            )}
+          </Button>
+          
+          {importMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="p-3 rounded-xl bg-emerald-50 border border-emerald-100"
+            >
+              <div className="flex items-center justify-center gap-2 text-sm text-emerald-700">
+                <span className="font-medium">{importMessage}</span>
+              </div>
+            </motion.div>
+          )}
+        </div>
 
         {/* Stats */}
         <div className="flex items-center justify-between mb-4">
