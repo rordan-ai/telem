@@ -76,30 +76,29 @@ export default function Recruitment() {
       const existingPhones = new Set(existingCandidates.map((c) => c.phone.replace(/\D/g, "")));
       const newCandidates = [];
 
-      // Fetch all 4 tabs
+      // Fetch all 4 tabs with correct gids
       const tabs = [
-      { name: "general", gids: ["0"] },
-      { name: "segan_tzoran", gids: ["637665307"] },
-      { name: "segan_beer_yaakov", gids: ["691974204"] },
-      { name: "manager_commerce", gids: ["668402077"] }];
+      { name: "general", gid: "0" },
+      { name: "segan_tzoran", gid: "637665307" },
+      { name: "segan_beer_yaakov", gid: "691974204" },
+      { name: "manager_commerce", gid: "668402077" }];
 
 
       for (const tab of tabs) {
         let csvText = null;
 
-        // Try each possible gid for this position
-        for (const gid of tab.gids) {
-          try {
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
-            const response = await fetch(csvUrl);
-            csvText = await response.text();
-            if (csvText && csvText.length > 10) break; // Found valid data
-          } catch {
-            continue; // Try next gid
-          }
+        try {
+          const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`;
+          console.log(`Fetching ${tab.name} from gid=${tab.gid}`);
+          const response = await fetch(csvUrl);
+          csvText = await response.text();
+          console.log(`${tab.name}: Got ${csvText.length} chars`);
+        } catch (error) {
+          console.error(`Error fetching ${tab.name}:`, error);
+          continue;
         }
 
-        if (!csvText) continue;
+        if (!csvText || csvText.length < 10) continue;
 
         try {
           const rows = parseCSV(csvText);
