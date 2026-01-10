@@ -86,13 +86,11 @@ export default function Recruitment() {
         existingMap.set(key, c);
       });
 
-      // gid values need to be found from the actual spreadsheet URLs
-      // For now using sheet names with a different export method
       const tabs = [
-        { name: "general", sheetName: "עובדים כללי", gid: "0" },
-        { name: "segan_tzoran", sheetName: "סגן צורן", gid: "1" },
-        { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב", gid: "2" },
-        { name: "manager_commerce", sheetName: "מנהל סחר", gid: "3" }
+        { name: "general", sheetName: "עובדים כללי" },
+        { name: "segan_tzoran", sheetName: "סגן צורן" },
+        { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
+        { name: "manager_commerce", sheetName: "מנהל סחר" }
       ];
 
       const toCreate = [];
@@ -101,8 +99,8 @@ export default function Recruitment() {
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
-        // Using export/download URL which fetches ALL rows
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${tab.gid}`;
+        // Using gviz URL with sheet name for reliable fetching
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
         const res = await fetch(url);
         if (!res.ok) {
           debugInfo.push(`${tab.sheetName}: שגיאת רשת`);
