@@ -199,9 +199,15 @@ export default function Recruitment() {
             status: "not_handled",
             notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : '',
             sheet_row_id: `${tab.name}_${cleaned}_${Date.now()}`
-          });
-        }
-      }
+            });
+            }
+
+            debugInfo.push(`${tab.sheetName}: ${rowCount} שורות, ${addedCount} חדשים, ${skippedExisting} קיימים, ${skippedDupe} כפולים`);
+            }
+
+            console.log("=== דוח ייבוא ===");
+            debugInfo.forEach(line => console.log(line));
+            console.log(`סה"כ להוספה: ${toCreate.length}`);
 
       // ייבוא רק חדשים - בקבוצות של 25 עם השהייה
       if (toCreate.length > 0) {
