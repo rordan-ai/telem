@@ -94,6 +94,7 @@ export default function Recruitment() {
       ];
 
       const toCreate = [];
+      const toDelete = []; // מועמדים למחיקה (קיימים באפליקציה אך לא בגיליון)
       const seenKeys = new Set();
       const debugInfo = [];
 
