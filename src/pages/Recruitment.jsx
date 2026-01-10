@@ -200,11 +200,6 @@ export default function Recruitment() {
         await base44.entities.Candidate.bulkCreate(newCandidates);
       }
 
-      // Handle new candidates
-      if (newCandidates.length > 0) {
-        await base44.entities.Candidate.bulkCreate(newCandidates);
-      }
-
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
 
       // Generate detailed report
