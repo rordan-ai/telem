@@ -81,9 +81,6 @@ export default function Recruitment() {
           if (lines.length < 2) continue;
 
           const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/"/g, "").toLowerCase());
-          
-          console.log(`${tab.name} headers:`, headers);
-          
           const nameIndex = headers.findIndex(h => h.includes("שם") || h.includes("name"));
           const phoneIndex = headers.findIndex(h => h.includes("טלפון") || h.includes("phone") || h.includes("נייד") || h.includes("סלולר"));
           const timeIndex = headers.findIndex(h => h.includes("זמן") || h.includes("time") || h.includes("תאריך") || h.includes("ביצוע"));
@@ -92,8 +89,6 @@ export default function Recruitment() {
           const experienceIndex = headers.findIndex(h => h.includes("ניסיון") || h.includes("experience") || h.includes("תאור"));
           const availabilityIndex = headers.findIndex(h => h.includes("זמינות") || h.includes("availability"));
           const notesIndex = headers.findIndex(h => h.includes("הערות") || h.includes("notes") || h.includes("הערה"));
-          
-          console.log(`${tab.name} indexes - name:${nameIndex}, phone:${phoneIndex}`);
 
           if (nameIndex === -1 || phoneIndex === -1) continue;
 
@@ -102,25 +97,13 @@ export default function Recruitment() {
             const name = values[nameIndex]?.trim().replace(/"/g, "");
             const phone = values[phoneIndex]?.trim().replace(/"/g, "");
 
-            console.log(`${tab.name} row ${i}:`, { name, phone, values });
-
-            if (!name || !phone) {
-              console.log(`Skipping row ${i} - missing name or phone`);
-              continue;
-            }
+            if (!name || !phone) continue;
 
             const cleanPhone = phone.replace(/\D/g, "");
-            if (!cleanPhone || cleanPhone.length < 9) {
-              console.log(`Skipping row ${i} - invalid phone: ${phone}`);
-              continue;
-            }
-            
-            if (existingPhones.has(cleanPhone)) {
-              console.log(`Skipping row ${i} - phone already exists: ${cleanPhone}`);
-              continue;
-            }
+            if (!cleanPhone || cleanPhone.length < 9) continue;
+            if (existingPhones.has(cleanPhone)) continue;
 
-            const candidate = {
+            newCandidates.push({
               name,
               phone,
               position: tab.name,
@@ -132,10 +115,8 @@ export default function Recruitment() {
               status: "not_handled",
               notes: notesIndex !== -1 ? values[notesIndex]?.trim().replace(/"/g, "") : "",
               sheet_row_id: `${tab.name}_row_${i}`,
-            };
+            });
             
-            console.log(`Adding candidate:`, candidate);
-            newCandidates.push(candidate);
             existingPhones.add(cleanPhone);
           }
         } catch (tabError) {
@@ -143,8 +124,6 @@ export default function Recruitment() {
         }
       }
 
-      console.log(`Total new candidates to import: ${newCandidates.length}`);
-      
       if (newCandidates.length > 0) {
         await base44.entities.Candidate.bulkCreate(newCandidates);
         setImportMessage(`נוספו ${newCandidates.length} מועמדים חדשים`);
