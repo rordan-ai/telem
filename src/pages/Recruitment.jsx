@@ -314,10 +314,19 @@ export default function Recruitment() {
     console.log("🏁 תהליך הייבוא הסתיים");
   };
 
+  // רענון אוטומטי: בטעינה ראשונית וכל דקה
+  useEffect(() => {
+    // רענון ראשוני
+    fetchAndImport();
 
+    // רענון אוטומטי כל דקה
+    const intervalId = setInterval(() => {
+      fetchAndImport();
+    }, 60000); // 60 שניות = דקה
 
-  // ללא auto-import - רק ידני
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // ניקוי interval כשהקומפוננטה מתפרקת
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleUpdate = async () => {
    queryClient.invalidateQueries({ queryKey: ["candidates"] });
