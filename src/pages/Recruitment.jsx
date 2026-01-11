@@ -186,16 +186,11 @@ export default function Recruitment() {
         };
 
         // עיבוד כל שורה מהגיליון
-        let skippedRows = 0;
         for (const row of rows.slice(1)) {
           const name = idx.name !== -1 ? String(row[idx.name] ?? '').trim() : '';
           const phone = idx.phone !== -1 ? String(row[idx.phone] ?? '').trim() : '';
           
-          // דילוג על שורות ריקות
-          if (!name || !phone) {
-            skippedRows++;
-            continue;
-          }
+          console.log(`🔎 מעבד שורה: שם='${name}', טלפון='${phone}', גיליון=${tab.sheetName}`);
 
           const candidateData = {
             name,
@@ -256,9 +251,9 @@ export default function Recruitment() {
             candidateData.notes = "";
             candidateData.is_deleted_by_app = false;
             toCreate.push(candidateData);
+            console.log(`✅ מועמד חדש נוסף: ${name}`);
           }
         }
-        console.log(`✅ גיליון ${tab.sheetName}: דילגנו על ${skippedRows} שורות ריקות`);
       }
 
       console.log(`\n📊 סיכום:`);
