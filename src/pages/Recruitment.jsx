@@ -181,6 +181,7 @@ export default function Recruitment() {
           expDesc: findIndex(["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
           working: findIndex(["עובד כרגע?", "עובד כרגע"]),
           transport: findIndex(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
+          notesFromSheet: 12, // עמודת M
           commerceExp: tab.name === "manager_commerce" ? 2 : -1,
           comax: tab.name === "manager_commerce" ? 3 : -1,
           planogram: tab.name === "manager_commerce" ? 4 : -1,
@@ -195,6 +196,8 @@ export default function Recruitment() {
           const phone = idx.phone !== -1 ? String(row[idx.phone] ?? '').trim() : '';
           
           console.log(`🔎 מעבד שורה: שם='${name}', טלפון='${phone}', גיליון=${tab.sheetName}`);
+
+          const notesFromSheet = idx.notesFromSheet !== -1 ? String(row[idx.notesFromSheet] ?? '').trim() : '';
 
           const candidateData = {
             name,
@@ -232,6 +235,14 @@ export default function Recruitment() {
               continue;
             }
             
+            // האפליקציה קובעת - אם יש הערות באפליקציה, לא לדרוס אותן מהגיליון
+            if (existingCandidate.notes && existingCandidate.notes.trim() !== '') {
+              candidateData.notes = existingCandidate.notes;
+            } else {
+              // אם אין הערות באפליקציה, נשתמש בהערות מהגיליון
+              candidateData.notes = notesFromSheet;
+            }
+            
             // בדיקה אם יש שינויים בפועל - השוואת נתונים
             let hasChanges = false;
             for (const key in candidateData) {
@@ -250,9 +261,9 @@ export default function Recruitment() {
               });
             }
           } else {
-            // מועמד חדש
+            // מועמד חדש - נשתמש בהערות מהגיליון
             candidateData.status = "not_handled";
-            candidateData.notes = "";
+            candidateData.notes = notesFromSheet;
             candidateData.is_deleted_by_app = false;
             toCreate.push(candidateData);
             console.log(`✅ מועמד חדש נוסף: ${name}`);
