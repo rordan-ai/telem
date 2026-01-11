@@ -33,8 +33,8 @@ export default function Recruitment() {
       return matchesPosition && matchesSearch;
     })
     .sort((a, b) => {
-      const dateA = new Date(a.created_date).getTime();
-      const dateB = new Date(b.created_date).getTime();
+      const dateA = a.contact_time ? new Date(a.contact_time).getTime() : 0;
+      const dateB = b.contact_time ? new Date(b.contact_time).getTime() : 0;
       return dateB - dateA;
     });
 
