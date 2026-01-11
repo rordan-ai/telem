@@ -455,9 +455,14 @@ export default function Recruitment() {
           <h2 className="font-semibold text-slate-700">
             מועמדים ל{positionLabel}
           </h2>
-          <span className="bg-slate-900 text-slate-50 px-3 py-1 text-sm rounded-full">
-            {filteredCandidates.length} מועמדים
-          </span>
+          <div className="flex flex-col gap-2 items-end">
+            <span className="bg-slate-900 text-slate-50 px-3 py-1 text-sm rounded-full">
+              {filteredCandidates.length} מועמדים
+            </span>
+            <span className="bg-red-900 text-white px-3 py-1 text-sm rounded-full">
+              נמחקו: {candidates.filter(c => c.position === activePosition && c.is_deleted_by_app).length}
+            </span>
+          </div>
         </div>
 
         {/* Candidates List */}
