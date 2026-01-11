@@ -31,6 +31,14 @@ export default function Recruitment() {
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.phone.includes(searchQuery);
       const notDeleted = !c.is_deleted_by_app;
+      
+      if (!matchesPosition) {
+        console.log(`🔍 ${c.name} לא מתאים לתפקיד ${activePosition} (תפקיד: ${c.position})`);
+      }
+      if (!notDeleted) {
+        console.log(`🗑️ ${c.name} נמחק באפליקציה`);
+      }
+      
       return matchesPosition && matchesSearch && notDeleted;
     })
     .sort((a, b) => {
@@ -84,9 +92,11 @@ export default function Recruitment() {
 
   const fetchAndImport = async () => {
     setIsImporting(true);
+    console.log("🔄 התחלת ייבוא נתונים...");
     try {
       // טעינת כל המועמדים הקיימים מה-DB
       const existingCandidates = await base44.entities.Candidate.list();
+      console.log(`✅ נטענו ${existingCandidates.length} מועמדים קיימים מה-DB`);
       
       // יצירת מפה לזיהוי מהיר של מועמדים קיימים
       const existingMap = new Map();
@@ -106,14 +116,22 @@ export default function Recruitment() {
       const toUpdate = [];
 
       for (const tab of tabs) {
+        console.log(`📊 מעבד גיליון: ${tab.sheetName} (${tab.name})`);
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
         const res = await fetch(url);
-        if (!res.ok) continue;
+        if (!res.ok) {
+          console.log(`❌ נכשל לטעון גיליון: ${tab.sheetName}`);
+          continue;
+        }
         const csvText = await res.text();
 
         const rows = parseCSV(csvText);
-        if (!rows || rows.length < 2) continue;
+        console.log(`📝 נמצאו ${rows.length - 1} שורות בגיליון ${tab.sheetName}`);
+        if (!rows || rows.length < 2) {
+          console.log(`⚠️ אין מספיק שורות בגיליון ${tab.sheetName}`);
+          continue;
+        }
 
         const normalizeHeader = (t) => String(t || '')
           .replace(/\uFEFF/g, '')
@@ -168,12 +186,16 @@ export default function Recruitment() {
         };
 
         // עיבוד כל שורה מהגיליון
+        let skippedRows = 0;
         for (const row of rows.slice(1)) {
           const name = idx.name !== -1 ? String(row[idx.name] ?? '').trim() : '';
           const phone = idx.phone !== -1 ? String(row[idx.phone] ?? '').trim() : '';
           
           // דילוג על שורות ריקות
-          if (!name || !phone) continue;
+          if (!name || !phone) {
+            skippedRows++;
+            continue;
+          }
 
           const candidateData = {
             name,
@@ -224,34 +246,50 @@ export default function Recruitment() {
             toCreate.push(candidateData);
           }
         }
+        console.log(`✅ גיליון ${tab.sheetName}: דילגנו על ${skippedRows} שורות ריקות`);
       }
 
+      console.log(`\n📊 סיכום:`);
+      console.log(`   🆕 מועמדים חדשים ליצירה: ${toCreate.length}`);
+      console.log(`   🔄 מועמדים קיימים לעדכון: ${toUpdate.length}`);
+
       // ביצוע עדכונים
-      for (const update of toUpdate) {
+      console.log(`\n🔄 מתחיל עדכון ${toUpdate.length} מועמדים...`);
+      for (let i = 0; i < toUpdate.length; i++) {
+        const update = toUpdate[i];
+        console.log(`   עדכון ${i + 1}/${toUpdate.length}: ${update.data.name}`);
         await base44.entities.Candidate.update(update.id, update.data);
       }
+      console.log(`✅ סיימתי לעדכן ${toUpdate.length} מועמדים`);
 
       // ביצוע הוספות
       if (toCreate.length > 0) {
+        console.log(`\n➕ מתחיל הוספת ${toCreate.length} מועמדים חדשים...`);
         const batchSize = 25;
         for (let i = 0; i < toCreate.length; i += batchSize) {
           const batch = toCreate.slice(i, i + batchSize);
+          console.log(`   הוספת מנה ${Math.floor(i / batchSize) + 1}: ${batch.length} מועמדים`);
           await base44.entities.Candidate.bulkCreate(batch);
           if (i + batchSize < toCreate.length) {
             await new Promise(r => setTimeout(r, 300));
           }
         }
+        console.log(`✅ סיימתי להוסיף ${toCreate.length} מועמדים חדשים`);
       }
 
+      console.log(`\n🔄 מרענן את הרשימה...`);
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      console.log(`✅ הייבוא הושלם בהצלחה!`);
       setImportMessage(`עודכנו ${toUpdate.length} מועמדים, נוספו ${toCreate.length} חדשים`);
       setTimeout(() => setImportMessage(null), 8000);
     } catch (e) {
-      console.error("Import error:", e);
+      console.error("❌ שגיאה בייבוא:", e);
+      console.error("פרטי השגיאה:", e.message, e.stack);
       setImportMessage(`שגיאה: ${e.message || "בייבוא נתונים"}`);
       setTimeout(() => setImportMessage(null), 8000);
     }
     setIsImporting(false);
+    console.log("🏁 תהליך הייבוא הסתיים");
   };
 
 
