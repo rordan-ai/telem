@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, RefreshCw, Search } from "lucide-react";
+import { Users, Loader2, RefreshCw, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CandidateCard from "@/components/CandidateCard";
 import PositionTabs from "@/components/PositionTabs";
 
@@ -16,6 +17,8 @@ export default function Recruitment() {
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [showBranchModal, setShowBranchModal] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -31,6 +34,7 @@ export default function Recruitment() {
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.phone.includes(searchQuery);
       const notDeleted = !c.is_deleted_by_app;
+      const matchesBranch = !selectedBranch || c.branch === selectedBranch;
       
       if (!matchesPosition) {
         console.log(`🔍 ${c.name} לא מתאים לתפקיד ${activePosition} (תפקיד: ${c.position})`);
@@ -39,7 +43,7 @@ export default function Recruitment() {
         console.log(`🗑️ ${c.name} נמחק באפליקציה`);
       }
       
-      return matchesPosition && matchesSearch && notDeleted;
+      return matchesPosition && matchesSearch && notDeleted && matchesBranch;
     })
     .sort((a, b) => {
       const dateA = a.contact_time ? new Date(a.contact_time).getTime() : 0;
@@ -316,6 +320,9 @@ export default function Recruitment() {
   };
   const positionLabel = positionLabels[activePosition] || activePosition;
 
+  // Get unique branches from candidates
+  const uniqueBranches = [...new Set(candidates.map(c => c.branch).filter(b => b && b.trim() !== ''))];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100" dir="rtl">
       {/* Header */}
@@ -337,18 +344,62 @@ export default function Recruitment() {
             activePosition={activePosition}
             onPositionChange={setActivePosition} />
 
-          <div className="relative mt-4">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="חיפוש לפי שם או טלפון..."
-              className="bg-slate-800 border-slate-700 text-slate-50 placeholder:text-slate-500 pr-10" 
-            />
+          <div className="flex gap-2 mt-4">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="חיפוש לפי שם או טלפון..."
+                className="bg-slate-800 border-slate-700 text-slate-50 placeholder:text-slate-500 pr-10" 
+              />
+            </div>
+            <Button
+              onClick={() => setShowBranchModal(true)}
+              className="bg-slate-800 border-slate-700 text-slate-50 hover:bg-slate-700 px-4"
+              variant="outline"
+            >
+              <Filter className="w-4 h-4 ml-2" />
+              {selectedBranch ? 'סנן מודעה' : 'מיון מודעה'}
+            </Button>
           </div>
 
-        </div>
-      </header>
+          </div>
+          </header>
+
+          {/* Branch Filter Modal */}
+          <Dialog open={showBranchModal} onOpenChange={setShowBranchModal}>
+          <DialogContent dir="rtl" className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>בחר מודעה לסינון</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            <Button
+              onClick={() => {
+                setSelectedBranch(null);
+                setShowBranchModal(false);
+              }}
+              className={`w-full justify-start ${!selectedBranch ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-900'}`}
+              variant={!selectedBranch ? "default" : "outline"}
+            >
+              כל המודעות
+            </Button>
+            {uniqueBranches.sort().map((branch) => (
+              <Button
+                key={branch}
+                onClick={() => {
+                  setSelectedBranch(branch);
+                  setShowBranchModal(false);
+                }}
+                className={`w-full justify-start ${selectedBranch === branch ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-900'}`}
+                variant={selectedBranch === branch ? "default" : "outline"}
+              >
+                {branch}
+              </Button>
+            ))}
+          </div>
+          </DialogContent>
+          </Dialog>
 
       {/* Main Content */}
       <main className="bg-slate-500 mx-auto px-4 py-6 max-w-lg">
