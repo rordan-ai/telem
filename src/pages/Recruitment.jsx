@@ -233,11 +233,23 @@ export default function Recruitment() {
               continue;
             }
             
-            // עדכון פרטים מהגיליון (ללא דריסת status ו-notes)
-            toUpdate.push({
-              id: existingCandidate.id,
-              data: candidateData
-            });
+            // בדיקה אם יש שינויים בפועל - השוואת נתונים
+            let hasChanges = false;
+            for (const key in candidateData) {
+              if (candidateData[key] !== existingCandidate[key]) {
+                hasChanges = true;
+                console.log(`   שינוי ב-${name}: שדה ${key} משתנה מ-"${existingCandidate[key]}" ל-"${candidateData[key]}"`);
+                break;
+              }
+            }
+            
+            // רק אם יש שינויים - מוסיפים לרשימת העדכונים
+            if (hasChanges) {
+              toUpdate.push({
+                id: existingCandidate.id,
+                data: candidateData
+              });
+            }
           } else {
             // מועמד חדש
             candidateData.status = "not_handled";
