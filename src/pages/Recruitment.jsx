@@ -30,7 +30,8 @@ export default function Recruitment() {
       const matchesSearch =
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.phone.includes(searchQuery);
-      return matchesPosition && matchesSearch;
+      const notDeleted = !c.is_deleted_by_app;
+      return matchesPosition && matchesSearch && notDeleted;
     })
     .sort((a, b) => {
       const dateA = a.contact_time ? new Date(a.contact_time).getTime() : 0;
@@ -84,11 +85,15 @@ export default function Recruitment() {
   const fetchAndImport = async () => {
     setIsImporting(true);
     try {
-      // מחיקת כל המועמדים הקיימים - התחלה נקייה
-      const existing = await base44.entities.Candidate.list();
-      for (const c of existing) {
-        await base44.entities.Candidate.delete(c.id);
-      }
+      // טעינת כל המועמדים הקיימים מה-DB
+      const existingCandidates = await base44.entities.Candidate.list();
+      
+      // יצירת מפה לזיהוי מהיר של מועמדים קיימים
+      const existingMap = new Map();
+      existingCandidates.forEach(c => {
+        const key = `${c.name}_${c.phone}_${c.position}`;
+        existingMap.set(key, c);
+      });
 
       const tabs = [
         { name: "general", sheetName: "עובדים כללי" },
@@ -98,6 +103,7 @@ export default function Recruitment() {
       ];
 
       const toCreate = [];
+      const toUpdate = [];
 
       for (const tab of tabs) {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
@@ -153,7 +159,6 @@ export default function Recruitment() {
           expDesc: findIndex(["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
           working: findIndex(["עובד כרגע?", "עובד כרגע"]),
           transport: findIndex(["רכב/ניידות", "רכב", "ניידות", "מרחק"]),
-          notes: findIndex(["הערות"]),
           commerceExp: tab.name === "manager_commerce" ? 2 : -1,
           comax: tab.name === "manager_commerce" ? 3 : -1,
           planogram: tab.name === "manager_commerce" ? 4 : -1,
@@ -162,11 +167,17 @@ export default function Recruitment() {
           availability: tab.name === "manager_commerce" ? 7 : -1
         };
 
-        // ייבוא כל שורה מהגיליון ללא שום בדיקה
+        // עיבוד כל שורה מהגיליון
         for (const row of rows.slice(1)) {
+          const name = idx.name !== -1 ? String(row[idx.name] ?? '').trim() : '';
+          const phone = idx.phone !== -1 ? String(row[idx.phone] ?? '').trim() : '';
+          
+          // דילוג על שורות ריקות
+          if (!name || !phone) continue;
+
           const candidateData = {
-            name: idx.name !== -1 ? String(row[idx.name] ?? '') : '',
-            phone: idx.phone !== -1 ? String(row[idx.phone] ?? '') : '',
+            name,
+            phone,
             email: idx.email !== -1 ? String(row[idx.email] ?? '') : '',
             position: tab.name,
             branch: idx.branch !== -1 ? String(row[idx.branch] ?? '') : '',
@@ -177,9 +188,7 @@ export default function Recruitment() {
             job_title: idx.job !== -1 ? String(row[idx.job] ?? '') : '',
             experience_description: idx.expDesc !== -1 ? String(row[idx.expDesc] ?? '') : '',
             currently_working: idx.working !== -1 ? String(row[idx.working] ?? '') : '',
-            transportation: idx.transport !== -1 ? String(row[idx.transport] ?? '') : '',
-            status: "not_handled",
-            notes: idx.notes !== -1 ? String(row[idx.notes] ?? '') : ''
+            transportation: idx.transport !== -1 ? String(row[idx.transport] ?? '') : ''
           };
           
           if (tab.name === "manager_commerce") {
@@ -191,11 +200,38 @@ export default function Recruitment() {
             candidateData.availability = idx.availability !== -1 ? String(row[idx.availability] ?? '') : '';
           }
 
-          toCreate.push(candidateData);
+          // חיפוש מועמד קיים
+          const key = `${name}_${phone}_${tab.name}`;
+          const existingCandidate = existingMap.get(key);
+
+          if (existingCandidate) {
+            // מועמד קיים - בדיקה אם נמחק ע"י האפליקציה
+            if (existingCandidate.is_deleted_by_app) {
+              // דילוג על מועמדים שנמחקו באפליקציה
+              continue;
+            }
+            
+            // עדכון פרטים מהגיליון (ללא דריסת status ו-notes)
+            toUpdate.push({
+              id: existingCandidate.id,
+              data: candidateData
+            });
+          } else {
+            // מועמד חדש
+            candidateData.status = "not_handled";
+            candidateData.notes = "";
+            candidateData.is_deleted_by_app = false;
+            toCreate.push(candidateData);
+          }
         }
       }
 
-      // הוספת כל המועמדים מהגיליון
+      // ביצוע עדכונים
+      for (const update of toUpdate) {
+        await base44.entities.Candidate.update(update.id, update.data);
+      }
+
+      // ביצוע הוספות
       if (toCreate.length > 0) {
         const batchSize = 25;
         for (let i = 0; i < toCreate.length; i += batchSize) {
@@ -208,7 +244,7 @@ export default function Recruitment() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
-      setImportMessage("הנתונים עודכנו");
+      setImportMessage(`עודכנו ${toUpdate.length} מועמדים, נוספו ${toCreate.length} חדשים`);
       setTimeout(() => setImportMessage(null), 8000);
     } catch (e) {
       console.error("Import error:", e);

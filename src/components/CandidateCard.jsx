@@ -62,7 +62,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
   };
 
   const handleDelete = async () => {
-    await base44.entities.Candidate.delete(candidate.id);
+    await base44.entities.Candidate.update(candidate.id, { is_deleted_by_app: true });
     setShowDeleteDialog(false);
     onUpdate?.();
   };
