@@ -33,9 +33,9 @@ export default function Recruitment() {
       return matchesPosition && matchesSearch;
     })
     .sort((a, b) => {
-      const timeA = a.contact_time ? new Date(a.contact_time).getTime() : 0;
-      const timeB = b.contact_time ? new Date(b.contact_time).getTime() : 0;
-      return timeB - timeA;
+      const dateA = new Date(a.created_date).getTime();
+      const dateB = new Date(b.created_date).getTime();
+      return dateB - dateA;
     });
 
 
