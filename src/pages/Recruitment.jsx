@@ -24,13 +24,19 @@ export default function Recruitment() {
     queryFn: () => base44.entities.Candidate.list("-created_date")
   });
 
-  const filteredCandidates = candidates.filter((c) => {
-    const matchesPosition = c.position === activePosition;
-    const matchesSearch =
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.phone.includes(searchQuery);
-    return matchesPosition && matchesSearch;
-  });
+  const filteredCandidates = candidates
+    .filter((c) => {
+      const matchesPosition = c.position === activePosition;
+      const matchesSearch =
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.phone.includes(searchQuery);
+      return matchesPosition && matchesSearch;
+    })
+    .sort((a, b) => {
+      const timeA = a.contact_time ? new Date(a.contact_time).getTime() : 0;
+      const timeB = b.contact_time ? new Date(b.contact_time).getTime() : 0;
+      return timeB - timeA;
+    });
 
 
 
