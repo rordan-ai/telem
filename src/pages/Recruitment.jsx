@@ -113,7 +113,8 @@ export default function Recruitment() {
         { name: "general", sheetName: "עובדים כללי" },
         { name: "segan_tzoran", sheetName: "סגן צורן" },
         { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
-        { name: "manager_commerce", sheetName: "מנהל סחר" }
+        { name: "manager_commerce", sheetName: "מנהל סחר" },
+        { name: "climbing_wall", sheetName: "קיר טיפוס" }
       ];
 
       const toCreate = [];
@@ -336,7 +337,8 @@ export default function Recruitment() {
     general: "עובדים כללי",
     segan_tzoran: "סגן צורן",
     segan_beer_yaakov: "סגן באר יעקב",
-    manager_commerce: "מנהל סחר"
+    manager_commerce: "מנהל סחר",
+    climbing_wall: "קיר טיפוס"
   };
   const positionLabel = positionLabels[activePosition] || activePosition;
 
