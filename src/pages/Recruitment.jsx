@@ -170,13 +170,13 @@ export default function Recruitment() {
         })();
 
         const idx = {
-          name: nameIdx,
-          phone: findIndex(["טלפון", "נייד", "סלולרי"]),
-          email: findIndex(["אימייל", "דואר", "מייל"]),
-          branch: findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
+          name: tab.name === "climbing_wall" ? 2 : nameIdx,
+          phone: tab.name === "climbing_wall" ? 3 : findIndex(["טלפון", "נייד", "סלולרי"]),
+          email: tab.name === "climbing_wall" ? 9 : findIndex(["אימייל", "דואר", "מייל"]),
+          branch: tab.name === "climbing_wall" ? 1 : findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
           campaign: findIndex(["שם הקמפיין", "קמפיין"]),
-          time: findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"]),
-          city: findIndex(["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
+          time: tab.name === "climbing_wall" ? 0 : findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"]),
+          city: tab.name === "climbing_wall" ? 4 : findIndex(["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
           exp: findIndex(["האם יש ניסיון", "ניסיון"]),
           job: findIndex(["מועמד למשרה", "משרה", "תפקיד"]),
           expDesc: findIndex(["תאור קצר ניסיון", "תיאור", "תאור", "תאור קצר"]),
@@ -189,11 +189,10 @@ export default function Recruitment() {
           supplierNeg: tab.name === "manager_commerce" ? 5 : -1,
           pnl: tab.name === "manager_commerce" ? 6 : -1,
           availability: tab.name === "manager_commerce" ? 7 : -1,
-          instructionExp: tab.name === "climbing_wall" ? findIndex(["ניסיון הדרכה"]) : -1,
-          climbingExp: tab.name === "climbing_wall" ? findIndex(["ניסיון בטיפוס"]) : -1,
-          socialMedia: tab.name === "climbing_wall" ? findIndex(["פוסט אינסטגרם", "פוסט", "אינסטגרם"]) : -1,
-          escortExp: tab.name === "climbing_wall" ? findIndex(["ליווי ניסיון"]) : -1,
-          verificationDate: tab.name === "climbing_wall" ? findIndex(["אימות תאריך", "תאריך המעמדה"]) : -1
+          instructionExp: tab.name === "climbing_wall" ? 5 : -1,
+          instructionExpDetails: tab.name === "climbing_wall" ? 6 : -1,
+          physicalActivityExp: tab.name === "climbing_wall" ? 7 : -1,
+          physicalActivityDetails: tab.name === "climbing_wall" ? 8 : -1
         };
 
         // עיבוד כל שורה מהגיליון
@@ -232,10 +231,9 @@ export default function Recruitment() {
 
           if (tab.name === "climbing_wall") {
             candidateData.instruction_experience = idx.instructionExp !== -1 ? String(row[idx.instructionExp] ?? '') : '';
-            candidateData.climbing_experience = idx.climbingExp !== -1 ? String(row[idx.climbingExp] ?? '') : '';
-            candidateData.social_media_source = idx.socialMedia !== -1 ? String(row[idx.socialMedia] ?? '') : '';
-            candidateData.escort_experience = idx.escortExp !== -1 ? String(row[idx.escortExp] ?? '') : '';
-            candidateData.verification_date = idx.verificationDate !== -1 ? String(row[idx.verificationDate] ?? '') : '';
+            candidateData.instruction_experience_details = idx.instructionExpDetails !== -1 ? String(row[idx.instructionExpDetails] ?? '') : '';
+            candidateData.physical_activity_experience = idx.physicalActivityExp !== -1 ? String(row[idx.physicalActivityExp] ?? '') : '';
+            candidateData.physical_activity_details = idx.physicalActivityDetails !== -1 ? String(row[idx.physicalActivityDetails] ?? '') : '';
           }
 
           // חיפוש מועמד קיים

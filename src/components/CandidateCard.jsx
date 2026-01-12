@@ -239,24 +239,20 @@ export default function CandidateCard({ candidate, onUpdate }) {
             {candidate.position === 'climbing_wall' && (
               <>
                 <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-semibold min-w-[80px]">ניסיון הדרכה:</span>
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון הדרכה:</span>
                   <span className="text-slate-200">{candidate.instruction_experience || '-'}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-semibold min-w-[80px]">ניסיון בטיפוס:</span>
-                  <span className="text-slate-200">{candidate.climbing_experience || '-'}</span>
+                  <span className="text-slate-400 font-semibold min-w-[120px]">פירוט ניסיון הדרכה:</span>
+                  <span className="text-slate-200">{candidate.instruction_experience_details || '-'}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-semibold min-w-[80px]">מקור (רשתות חברתיות):</span>
-                  <span className="text-slate-200">{candidate.social_media_source || '-'}</span>
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון פעילות פיזית/מתקנים:</span>
+                  <span className="text-slate-200">{candidate.physical_activity_experience || '-'}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-semibold min-w-[80px]">ליווי ניסיון:</span>
-                  <span className="text-slate-200">{candidate.escort_experience || '-'}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-semibold min-w-[80px]">אימות תאריך המעמדה:</span>
-                  <span className="text-slate-200">{candidate.verification_date || '-'}</span>
+                  <span className="text-slate-400 font-semibold min-w-[120px]">פירוט ניסיון פעילות פיזית:</span>
+                  <span className="text-slate-200">{candidate.physical_activity_details || '-'}</span>
                 </div>
               </>
             )}
