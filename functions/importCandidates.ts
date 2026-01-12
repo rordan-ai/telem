@@ -77,16 +77,19 @@ Deno.serve(async (req) => {
       try {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
-        const res = await fetch(url);
+        console.log(`🔍 שולף גיליון: ${tab.sheetName}`);
+        const res = await fetch(url, { 
+          signal: AbortSignal.timeout(10000) // 10 seconds timeout
+        });
         if (!res.ok) {
-          console.log(`❌ נכשל לטעון גיליון: ${tab.sheetName}`);
+          console.log(`❌ נכשל לטעון גיליון ${tab.sheetName}: status ${res.status}`);
           return null;
         }
         const csvText = await res.text();
-        console.log(`✅ נשלף גיליון: ${tab.sheetName}`);
+        console.log(`✅ נשלף גיליון: ${tab.sheetName} (${csvText.length} תווים)`);
         return { tab, csvText };
       } catch (err) {
-        console.log(`❌ שגיאה בשליפת ${tab.sheetName}:`, err);
+        console.log(`❌ שגיאה בשליפת ${tab.sheetName}:`, err.message);
         return null;
       }
     });
@@ -248,16 +251,27 @@ Deno.serve(async (req) => {
     console.log(`📊 סיכום: ${toCreate.length} חדשים, ${toUpdate.length} עדכונים`);
 
     // ביצוע עדכונים
-    for (const update of toUpdate) {
-      await base44.asServiceRole.entities.Candidate.update(update.id, update.data);
+    console.log(`🔄 מעדכן ${toUpdate.length} מועמדים...`);
+    for (let i = 0; i < toUpdate.length; i++) {
+      const update = toUpdate[i];
+      try {
+        await base44.asServiceRole.entities.Candidate.update(update.id, update.data);
+      } catch (err) {
+        console.log(`⚠️ שגיאה בעדכון מועמד ${update.data.name}:`, err.message);
+      }
     }
 
     // ביצוע הוספות
     if (toCreate.length > 0) {
+      console.log(`➕ מוסיף ${toCreate.length} מועמדים חדשים...`);
       const batchSize = 25;
       for (let i = 0; i < toCreate.length; i += batchSize) {
         const batch = toCreate.slice(i, i + batchSize);
-        await base44.asServiceRole.entities.Candidate.bulkCreate(batch);
+        try {
+          await base44.asServiceRole.entities.Candidate.bulkCreate(batch);
+        } catch (err) {
+          console.log(`⚠️ שגיאה בהוספת מנה ${Math.floor(i / batchSize) + 1}:`, err.message);
+        }
         if (i + batchSize < toCreate.length) {
           await new Promise(r => setTimeout(r, 300));
         }
