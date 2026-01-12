@@ -20,12 +20,12 @@ export default function PositionTabs({ activePosition, onPositionChange }) {
           <button
             key={position.id}
             onClick={() => onPositionChange(position.id)}
-            className="text-slate-300 px-3 py-2 text-xs font-medium rounded-xl relative flex items-center justify-center transition-colors duration-200 hover:text-slate-100 text-center">
+            className="text-white px-3 py-2 text-xs font-medium rounded-xl relative flex items-center justify-center transition-colors duration-200 hover:text-slate-100 text-center">
 
             {isActive &&
             <motion.div
               layoutId="activeTab"
-              className="bg-blue-600 rounded-xl absolute inset-0 shadow-md"
+              className="bg-slate-700 rounded-xl absolute inset-0 shadow-md"
               transition={{ type: "spring", duration: 0.4 }} />
             }
             <span className="relative">
