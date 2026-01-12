@@ -16,6 +16,7 @@ export default function Recruitment() {
   const [activePosition, setActivePosition] = useState("general");
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showBranchModal, setShowBranchModal] = useState(false);
@@ -96,22 +97,46 @@ export default function Recruitment() {
 
   const fetchAndImport = async () => {
     setIsImporting(true);
+    setImportStatus("קורא את הגיליונות...");
     console.log("🔄 קורא לפונקציית ייבוא בשרת...");
+    
     try {
+      // הודעות סטטוס סימולטיביות
+      const statusMessages = [
+        { text: "קורא את הגיליונות...", delay: 0 },
+        { text: "משווה את הנתונים...", delay: 2000 },
+        { text: "מחלץ מועמדים חדשים...", delay: 4000 },
+        { text: "מעדכן את המסד נתונים...", delay: 6000 }
+      ];
+      
+      const statusTimeouts = [];
+      statusMessages.forEach(({ text, delay }) => {
+        const timeout = setTimeout(() => setImportStatus(text), delay);
+        statusTimeouts.push(timeout);
+      });
+      
       // קריאה לפונקציית השרת
       const { data } = await base44.functions.invoke('importCandidates', {});
       
+      // ניקוי טיימרים
+      statusTimeouts.forEach(t => clearTimeout(t));
+      
       if (data.success) {
         console.log("✅ הייבוא הושלם בהצלחה!");
+        setImportStatus("הושלם בהצלחה!");
         setImportMessage(data.message);
         queryClient.invalidateQueries({ queryKey: ["candidates"] });
       } else {
         throw new Error(data.error || 'שגיאה לא ידועה');
       }
       
-      setTimeout(() => setImportMessage(null), 8000);
+      setTimeout(() => {
+        setImportMessage(null);
+        setImportStatus("");
+      }, 8000);
     } catch (e) {
       console.error("❌ שגיאה בייבוא:", e);
+      setImportStatus("");
       setImportMessage(`שגיאה: ${e.message || "בייבוא נתונים"}`);
       setTimeout(() => setImportMessage(null), 8000);
     }
@@ -420,7 +445,8 @@ export default function Recruitment() {
           
           <PositionTabs
             activePosition={activePosition}
-            onPositionChange={setActivePosition} />
+            onPositionChange={setActivePosition}
+            candidates={candidates} />
 
           <div className="flex gap-2 mt-4">
             <div className="relative flex-1">
@@ -491,7 +517,7 @@ export default function Recruitment() {
             {isImporting ?
             <>
                 <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
-                מייבא מהגיליון...
+                {importStatus || "מייבא מהגיליון..."}
               </> :
 
             <>

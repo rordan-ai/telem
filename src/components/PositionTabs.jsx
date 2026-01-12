@@ -10,7 +10,11 @@ const positions = [
 { id: "climbing_wall", label: "קיר טיפוס", icon: Users }];
 
 
-export default function PositionTabs({ activePosition, onPositionChange }) {
+export default function PositionTabs({ activePosition, onPositionChange, candidates = [] }) {
+  // חישוב מספר מועמדים לכל תפקיד (לא כולל מחוקים)
+  const getCountForPosition = (positionId) => {
+    return candidates.filter(c => c.position === positionId && !c.is_deleted_by_app).length;
+  };
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-slate-800 rounded-2xl p-1 gap-1">
       {positions.map((position) => {
@@ -28,8 +32,11 @@ export default function PositionTabs({ activePosition, onPositionChange }) {
               className="bg-slate-700 rounded-xl absolute inset-0 shadow-md"
               transition={{ type: "spring", duration: 0.4 }} />
             }
-            <span className="relative">
-              {position.label}
+            <span className="relative flex items-center gap-1.5">
+              <span>{position.label}</span>
+              <span className="bg-slate-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                {getCountForPosition(position.id)}
+              </span>
             </span>
           </button>);
 
