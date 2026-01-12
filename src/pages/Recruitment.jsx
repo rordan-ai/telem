@@ -172,7 +172,7 @@ export default function Recruitment() {
         const idx = {
           name: tab.name === "climbing_wall" ? 2 : nameIdx,
           phone: tab.name === "climbing_wall" ? 3 : findIndex(["טלפון", "נייד", "סלולרי"]),
-          email: tab.name === "climbing_wall" ? 9 : findIndex(["אימייל", "דואר", "מייל"]),
+          email: tab.name === "climbing_wall" ? 10 : findIndex(["אימייל", "דואר", "מייל"]),
           branch: tab.name === "climbing_wall" ? 1 : findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
           campaign: findIndex(["שם הקמפיין", "קמפיין"]),
           time: tab.name === "climbing_wall" ? 0 : findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"]),
@@ -192,7 +192,8 @@ export default function Recruitment() {
           instructionExp: tab.name === "climbing_wall" ? 5 : -1,
           instructionExpDetails: tab.name === "climbing_wall" ? 6 : -1,
           physicalActivityExp: tab.name === "climbing_wall" ? 7 : -1,
-          physicalActivityDetails: tab.name === "climbing_wall" ? 8 : -1
+          physicalActivityDetails: tab.name === "climbing_wall" ? 8 : -1,
+          workHoursAvailability: tab.name === "climbing_wall" ? 9 : -1
         };
 
         // עיבוד כל שורה מהגיליון
@@ -234,6 +235,7 @@ export default function Recruitment() {
             candidateData.instruction_experience_details = idx.instructionExpDetails !== -1 ? String(row[idx.instructionExpDetails] ?? '') : '';
             candidateData.physical_activity_experience = idx.physicalActivityExp !== -1 ? String(row[idx.physicalActivityExp] ?? '') : '';
             candidateData.physical_activity_details = idx.physicalActivityDetails !== -1 ? String(row[idx.physicalActivityDetails] ?? '') : '';
+            candidateData.work_hours_availability = idx.workHoursAvailability !== -1 ? String(row[idx.workHoursAvailability] ?? '') : '';
           }
 
           // חיפוש מועמד קיים

@@ -254,6 +254,10 @@ export default function CandidateCard({ candidate, onUpdate }) {
                   <span className="text-slate-400 font-semibold min-w-[120px]">פירוט ניסיון פעילות פיזית:</span>
                   <span className="text-slate-200">{candidate.physical_activity_details || '-'}</span>
                 </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">התאמת שעות עבודה:</span>
+                  <span className="text-slate-200">{candidate.work_hours_availability || '-'}</span>
+                </div>
               </>
             )}
 
