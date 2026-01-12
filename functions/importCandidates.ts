@@ -274,10 +274,12 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("❌ שגיאה בייבוא:", error);
+    console.error("❌ שגיאה בייבוא:", error.message);
+    console.error("Stack trace:", error.stack);
     return Response.json({ 
-      error: error.message,
-      success: false 
+      error: error.message || "שגיאה לא צפויה בייבוא",
+      success: false,
+      details: error.stack 
     }, { status: 500 });
   }
 });

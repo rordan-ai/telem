@@ -136,8 +136,8 @@ export default function Recruitment() {
       }, 8000);
     } catch (e) {
       console.error("❌ שגיאה בייבוא:", e);
-      setImportStatus("");
-      setImportMessage(`שגיאה: ${e.message || "בייבוא נתונים"}`);
+      console.error("פרטי השגיאה:", e.response?.data || e.message);
+      setImportMessage(`שגיאה: ${e.response?.data?.error || e.message || "בייבוא נתונים"}`);
       setTimeout(() => setImportMessage(null), 8000);
     }
     setIsImporting(false);
