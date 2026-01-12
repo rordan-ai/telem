@@ -224,16 +224,8 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
           <div className="text-slate-50 pt-2 pb-1 space-y-2 text-xs">
             <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
-              <span className="text-slate-200">{candidate.contact_time || '-'}</span>
-            </div>
-            <div className="flex items-start gap-2">
               <span className="text-slate-400 font-semibold min-w-[80px]">מודעה:</span>
               <span className="text-slate-200">{candidate.branch || '-'}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">קמפיין:</span>
-              <span className="text-slate-200">{candidate.campaign || '-'}</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-slate-400 font-semibold min-w-[80px]">אימייל:</span>
@@ -243,28 +235,75 @@ export default function CandidateCard({ candidate, onUpdate }) {
               <span className="text-slate-400 font-semibold min-w-[80px]">ישוב מגורים:</span>
               <span className="text-slate-200">{candidate.city || '-'}</span>
             </div>
-            <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">האם יש ניסיון:</span>
-              <span className="text-slate-200">{candidate.has_experience || '-'}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">מועמד למשרה:</span>
-              <span className="text-slate-200">{candidate.job_title || '-'}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">תאור ניסיון:</span>
-              <span className="text-slate-200">{candidate.experience_description || '-'}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">עובד כרגע:</span>
-              <span className="text-slate-200">{candidate.currently_working || '-'}</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-slate-400 font-semibold min-w-[80px]">רכב/ניידות:</span>
-              <span className="text-slate-200">{candidate.transportation || '-'}</span>
-            </div>
+
+            {candidate.position === 'climbing_wall' && (
+              <>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">ניסיון הדרכה:</span>
+                  <span className="text-slate-200">{candidate.instruction_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">ניסיון בטיפוס:</span>
+                  <span className="text-slate-200">{candidate.climbing_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">מקור (רשתות חברתיות):</span>
+                  <span className="text-slate-200">{candidate.social_media_source || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">ליווי ניסיון:</span>
+                  <span className="text-slate-200">{candidate.escort_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">אימות תאריך המעמדה:</span>
+                  <span className="text-slate-200">{candidate.verification_date || '-'}</span>
+                </div>
+              </>
+            )}
+
+            {candidate.position !== 'climbing_wall' && candidate.position !== 'manager_commerce' && (
+              <>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
+                  <span className="text-slate-200">{candidate.contact_time || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">קמפיין:</span>
+                  <span className="text-slate-200">{candidate.campaign || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">האם יש ניסיון:</span>
+                  <span className="text-slate-200">{candidate.has_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">מועמד למשרה:</span>
+                  <span className="text-slate-200">{candidate.job_title || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">תאור ניסיון:</span>
+                  <span className="text-slate-200">{candidate.experience_description || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">עובד כרגע:</span>
+                  <span className="text-slate-200">{candidate.currently_working || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">רכב/ניידות:</span>
+                  <span className="text-slate-200">{candidate.transportation || '-'}</span>
+                </div>
+              </>
+            )}
+
             {candidate.position === 'manager_commerce' && (
               <>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
+                  <span className="text-slate-200">{candidate.contact_time || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">קמפיין:</span>
+                  <span className="text-slate-200">{candidate.campaign || '-'}</span>
+                </div>
                 <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-semibold min-w-[80px]">ניסיון בסחר/ניהול קטגוריות:</span>
                   <span className="text-slate-200">{candidate.commerce_experience || '-'}</span>

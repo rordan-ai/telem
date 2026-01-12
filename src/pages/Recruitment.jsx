@@ -188,7 +188,12 @@ export default function Recruitment() {
           planogram: tab.name === "manager_commerce" ? 4 : -1,
           supplierNeg: tab.name === "manager_commerce" ? 5 : -1,
           pnl: tab.name === "manager_commerce" ? 6 : -1,
-          availability: tab.name === "manager_commerce" ? 7 : -1
+          availability: tab.name === "manager_commerce" ? 7 : -1,
+          instructionExp: tab.name === "climbing_wall" ? findIndex(["ניסיון הדרכה"]) : -1,
+          climbingExp: tab.name === "climbing_wall" ? findIndex(["ניסיון בטיפוס"]) : -1,
+          socialMedia: tab.name === "climbing_wall" ? findIndex(["פוסט אינסטגרם", "פוסט", "אינסטגרם"]) : -1,
+          escortExp: tab.name === "climbing_wall" ? findIndex(["ליווי ניסיון"]) : -1,
+          verificationDate: tab.name === "climbing_wall" ? findIndex(["אימות תאריך", "תאריך המעמדה"]) : -1
         };
 
         // עיבוד כל שורה מהגיליון
@@ -223,6 +228,14 @@ export default function Recruitment() {
             candidateData.supplier_negotiation = idx.supplierNeg !== -1 ? String(row[idx.supplierNeg] ?? '') : '';
             candidateData.pnl_analysis = idx.pnl !== -1 ? String(row[idx.pnl] ?? '') : '';
             candidateData.availability = idx.availability !== -1 ? String(row[idx.availability] ?? '') : '';
+          }
+
+          if (tab.name === "climbing_wall") {
+            candidateData.instruction_experience = idx.instructionExp !== -1 ? String(row[idx.instructionExp] ?? '') : '';
+            candidateData.climbing_experience = idx.climbingExp !== -1 ? String(row[idx.climbingExp] ?? '') : '';
+            candidateData.social_media_source = idx.socialMedia !== -1 ? String(row[idx.socialMedia] ?? '') : '';
+            candidateData.escort_experience = idx.escortExp !== -1 ? String(row[idx.escortExp] ?? '') : '';
+            candidateData.verification_date = idx.verificationDate !== -1 ? String(row[idx.verificationDate] ?? '') : '';
           }
 
           // חיפוש מועמד קיים
