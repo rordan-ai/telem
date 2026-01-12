@@ -96,6 +96,31 @@ export default function Recruitment() {
 
   const fetchAndImport = async () => {
     setIsImporting(true);
+    console.log("🔄 קורא לפונקציית ייבוא בשרת...");
+    try {
+      // קריאה לפונקציית השרת
+      const { data } = await base44.functions.invoke('importCandidates', {});
+      
+      if (data.success) {
+        console.log("✅ הייבוא הושלם בהצלחה!");
+        setImportMessage(data.message);
+        queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      } else {
+        throw new Error(data.error || 'שגיאה לא ידועה');
+      }
+      
+      setTimeout(() => setImportMessage(null), 8000);
+    } catch (e) {
+      console.error("❌ שגיאה בייבוא:", e);
+      setImportMessage(`שגיאה: ${e.message || "בייבוא נתונים"}`);
+      setTimeout(() => setImportMessage(null), 8000);
+    }
+    setIsImporting(false);
+  };
+
+  // גיבוי - פונקציית ייבוא מקומית (לא בשימוש כרגע)
+  const fetchAndImportLocal = async () => {
+    setIsImporting(true);
     console.log("🔄 התחלת ייבוא נתונים...");
     try {
       // טעינת כל המועמדים הקיימים מה-DB
@@ -120,16 +145,33 @@ export default function Recruitment() {
       const toCreate = [];
       const toUpdate = [];
 
-      for (const tab of tabs) {
-        console.log(`📊 מעבד גיליון: ${tab.sheetName} (${tab.name})`);
-        const sheetNameEncoded = encodeURIComponent(tab.sheetName);
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.log(`❌ נכשל לטעון גיליון: ${tab.sheetName}`);
-          continue;
+      // שליפה מקבילית של כל הגיליונות - מהיר יותר
+      console.log(`📊 שולף ${tabs.length} גיליונות במקביל...`);
+      const fetchPromises = tabs.map(async (tab) => {
+        try {
+          const sheetNameEncoded = encodeURIComponent(tab.sheetName);
+          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
+          const res = await fetch(url);
+          if (!res.ok) {
+            console.log(`❌ נכשל לטעון גיליון: ${tab.sheetName}`);
+            return null;
+          }
+          const csvText = await res.text();
+          console.log(`✅ נשלף גיליון: ${tab.sheetName}`);
+          return { tab, csvText };
+        } catch (err) {
+          console.log(`❌ שגיאה בשליפת ${tab.sheetName}:`, err);
+          return null;
         }
-        const csvText = await res.text();
+      });
+      
+      const allSheets = await Promise.all(fetchPromises);
+      console.log(`✅ סיימתי לשלוף את כל הגיליונות`);
+
+      for (const sheetData of allSheets) {
+        if (!sheetData) continue;
+        const { tab, csvText } = sheetData;
+        console.log(`📊 מעבד גיליון: ${tab.sheetName} (${tab.name})`);
 
         const rows = parseCSV(csvText);
         console.log(`📝 נמצאו ${rows.length - 1} שורות בגיליון ${tab.sheetName}`);
@@ -327,6 +369,7 @@ export default function Recruitment() {
     setIsImporting(false);
     console.log("🏁 תהליך הייבוא הסתיים");
   };
+  // סוף פונקציית גיבוי
 
   // רענון אוטומטי: בטעינה ראשונית וכל דקה
   useEffect(() => {
