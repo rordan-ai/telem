@@ -304,7 +304,7 @@ Deno.serve(async (req) => {
       success: true,
       created: toCreate.length,
       updated: toUpdate.length,
-      message: `עודכנו ${toUpdate.length} מועמדים, נוספו ${toCreate.length} חדשים`
+      message: `סנכרון הצליח. ${toCreate.length} מועמדים נוספו`
     });
 
   } catch (error) {
