@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
       { name: "accountant_manager", sheetName: "מנהח\"ש" },
       { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
       { name: "manager_commerce", sheetName: "מנהל סחר" },
-      { name: "climbing_wall", sheetName: "קיר טיפוס" }
+      { name: "climbing_wall", sheetName: "קיר טיפוס" },
+      { name: "cv_update", sheetName: "קורות חיים" }
     ];
 
     // שליפה מקבילית של כל הגיליונות
