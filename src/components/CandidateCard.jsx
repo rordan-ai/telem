@@ -92,7 +92,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+      className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
 
       <div className="bg-slate-900 p-4 relative">
         {/* CV Icon - Absolute positioned top right */}
