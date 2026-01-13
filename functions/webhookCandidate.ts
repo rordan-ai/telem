@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
     // טעינת כל המועמדים
     console.log("🔍 [WEBHOOK] Searching for candidate...");
-    const allCandidates = await base44.asServiceRole.entities.Candidate.list();
+    const allCandidates = await base44.entities.Candidate.list();
     
     // חיפוש מועמד לפי שם או אימייל
     let foundCandidate = null;
