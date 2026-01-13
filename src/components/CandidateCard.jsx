@@ -96,21 +96,22 @@ export default function CandidateCard({ candidate, onUpdate }) {
 
       <div className="bg-slate-900 p-4 relative">
         {/* CV Icon - Absolute positioned top right */}
-        {candidate.cv_url && (
-          <a
-            href={candidate.cv_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 100 }}
-            className="hover:opacity-80 transition-opacity block"
-            title="צפה בקורות חיים">
-            <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
-              alt="קורות חיים"
-              style={{ width: '28px', height: '28px', display: 'block' }}
-            />
-          </a>
-        )}
+                      {candidate.cv_url && (
+                        <a
+                          href={candidate.cv_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 100 }}
+                          className="hover:opacity-80 transition-opacity block text-center"
+                          title="צפה בקורות חיים">
+                          <img
+                            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
+                            alt="קורות חיים"
+                            style={{ width: '36px', height: '36px', display: 'block' }}
+                          />
+                          <span className="text-[10px] text-white mt-0.5 block">קו"ח</span>
+                        </a>
+                      )}
         
         {/* Header Row */}
         <div className="flex items-center justify-between gap-3 mb-3">
