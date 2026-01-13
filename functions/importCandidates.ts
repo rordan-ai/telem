@@ -149,8 +149,11 @@ Deno.serve(async (req) => {
       };
 
       const nameIdx = (() => {
-        if (tab.name === "segan_tzoran" || tab.name === "segan_beer_yaakov") {
+        if (tab.name === "segan_beer_yaakov") {
           return 2;
+        }
+        if (tab.name === "accountant_manager") {
+          return 1; // עמודה B - שם
         }
         let i = headers.findIndex(h => h === "שם מועמד" || h === "שם מלא");
         if (i !== -1) return i;
@@ -160,12 +163,12 @@ Deno.serve(async (req) => {
       })();
 
       const idx = {
-        name: tab.name === "climbing_wall" ? 2 : nameIdx,
-        phone: tab.name === "climbing_wall" ? 3 : findIndex(["טלפון", "נייד", "סלולרי"]),
+        name: tab.name === "climbing_wall" ? 2 : (tab.name === "accountant_manager" ? 1 : nameIdx),
+        phone: tab.name === "climbing_wall" ? 3 : (tab.name === "accountant_manager" ? -1 : findIndex(["טלפון", "נייד", "סלולרי"])),
         email: tab.name === "climbing_wall" ? 10 : findIndex(["אימייל", "דואר", "מייל"]),
         branch: tab.name === "climbing_wall" ? 1 : findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
         campaign: findIndex(["שם הקמפיין", "קמפיין"]),
-        time: tab.name === "climbing_wall" ? 0 : findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"]),
+        time: tab.name === "climbing_wall" ? 0 : (tab.name === "accountant_manager" ? 0 : findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"])),
         city: tab.name === "climbing_wall" ? 4 : findIndex(["ישוב מגורים", "מגורים", "עיר", "ישוב"]),
         exp: findIndex(["האם יש ניסיון", "ניסיון"]),
         job: findIndex(["מועמד למשרה", "משרה", "תפקיד"]),
@@ -183,7 +186,11 @@ Deno.serve(async (req) => {
         instructionExpDetails: tab.name === "climbing_wall" ? 6 : -1,
         physicalActivityExp: tab.name === "climbing_wall" ? 7 : -1,
         physicalActivityDetails: tab.name === "climbing_wall" ? 8 : -1,
-        workHoursAvailability: tab.name === "climbing_wall" ? 9 : -1
+        workHoursAvailability: tab.name === "climbing_wall" ? 9 : -1,
+        // מנהלת חשבונות - עמודות ספציפיות
+        accountantCertificate: tab.name === "accountant_manager" ? 2 : -1, // עמודה C
+        accountantComaxExp: tab.name === "accountant_manager" ? 3 : -1, // עמודה D
+        accountantRoleExp: tab.name === "accountant_manager" ? 5 : -1 // עמודה F
       };
 
       for (const row of rows.slice(1)) {
@@ -223,6 +230,12 @@ Deno.serve(async (req) => {
           candidateData.physical_activity_experience = idx.physicalActivityExp !== -1 ? String(row[idx.physicalActivityExp] ?? '') : '';
           candidateData.physical_activity_details = idx.physicalActivityDetails !== -1 ? String(row[idx.physicalActivityDetails] ?? '') : '';
           candidateData.work_hours_availability = idx.workHoursAvailability !== -1 ? String(row[idx.workHoursAvailability] ?? '') : '';
+        }
+
+        if (tab.name === "accountant_manager") {
+          candidateData.accountant_certificate = idx.accountantCertificate !== -1 ? String(row[idx.accountantCertificate] ?? '') : '';
+          candidateData.accountant_comax_experience = idx.accountantComaxExp !== -1 ? String(row[idx.accountantComaxExp] ?? '') : '';
+          candidateData.accountant_role_experience = idx.accountantRoleExp !== -1 ? String(row[idx.accountantRoleExp] ?? '') : '';
         }
 
         const key = `${name}_${phone}_${tab.name}`;
