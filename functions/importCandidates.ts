@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
 
     const tabs = [
       { name: "general", sheetName: "עובדים כללי" },
-      { name: "segan_tzoran", sheetName: "סגן צורן" },
+      { name: "accountant_manager", sheetName: "מנהח\"ש" },
       { name: "segan_beer_yaakov", sheetName: "סגן באר יעקב" },
       { name: "manager_commerce", sheetName: "מנהל סחר" },
       { name: "climbing_wall", sheetName: "קיר טיפוס" }

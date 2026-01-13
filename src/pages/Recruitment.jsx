@@ -420,7 +420,7 @@ export default function Recruitment() {
 
   const positionLabels = {
     general: "עובדים כללי",
-    segan_tzoran: "סגן צורן",
+    accountant_manager: "מנהלת חשבונות",
     segan_beer_yaakov: "סגן באר יעקב",
     manager_commerce: "מנהל סחר",
     climbing_wall: "קיר טיפוס"

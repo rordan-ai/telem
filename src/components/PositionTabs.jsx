@@ -4,7 +4,7 @@ import { Users, ShieldCheck, Building2, Briefcase } from "lucide-react";
 
 const positions = [
 { id: "general", label: "עובדים כללי", icon: Users },
-{ id: "segan_tzoran", label: "סגן צורן", icon: ShieldCheck },
+{ id: "accountant_manager", label: "מנהלת חשבונות", icon: ShieldCheck },
 { id: "segan_beer_yaakov", label: "סגן באר יעקב", icon: Building2 },
 { id: "manager_commerce", label: "מנהל סחר", icon: Briefcase },
 { id: "climbing_wall", label: "קיר טיפוס", icon: Users }];
