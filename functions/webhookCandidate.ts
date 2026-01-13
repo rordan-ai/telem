@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
     // עדכון קורות החיים למועמד שנמצא
     console.log(`📝 [WEBHOOK] Updating cv_url for ${foundCandidate.name} (${foundCandidate.id})`);
-    await base44.asServiceRole.entities.Candidate.update(foundCandidate.id, {
+    await base44.entities.Candidate.update(foundCandidate.id, {
       cv_url: cvUrl
     });
     
