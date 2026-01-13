@@ -172,7 +172,10 @@ Deno.serve(async (req) => {
     if (cvSheet) {
       console.log(`📄 [CV] Processing CV update sheet...`);
       const cvRows = parseCSV(cvSheet.csvText);
+      console.log(`📄 [CV] Found ${cvRows?.length || 0} rows in CV sheet`);
       if (cvRows && cvRows.length > 1) {
+        console.log(`📄 [CV] Headers: ${JSON.stringify(cvRows[0])}`);
+        console.log(`📄 [CV] First data row: ${JSON.stringify(cvRows[1])}`);
         let cvUpdated = 0;
         for (const row of cvRows.slice(1)) {
           // עמודות: A=שם מועמד, B=תפקיד, C=כתובת, D=קורות חיים, E=אימייל
@@ -181,7 +184,12 @@ Deno.serve(async (req) => {
           const cvUrl = String(row[3] ?? '').trim();
           const cvEmail = String(row[4] ?? '').trim();
           
-          if (!cvName || !cvUrl) continue;
+          console.log(`📄 [CV] Processing: name="${cvName}", job="${cvJobTitle}", url="${cvUrl?.substring(0,30)}...", email="${cvEmail}"`);
+          
+          if (!cvName || !cvUrl) {
+            console.log(`📄 [CV] Skipping - missing name or url`);
+            continue;
+          }
           
           // חיפוש מועמד קיים
           let foundCandidate = null;
