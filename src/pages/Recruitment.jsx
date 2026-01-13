@@ -136,8 +136,11 @@ export default function Recruitment() {
       }, 8000);
     } catch (e) {
       console.error("❌ שגיאה בייבוא:", e);
+      console.error("תגובת שרת:", e.response?.data);
+      statusTimeouts.forEach(t => clearTimeout(t));
       setImportStatus("");
-      setImportMessage(`שגיאה: ${e.message || "בייבוא נתונים"}`);
+      const errorMsg = e.response?.data?.error || e.message || "בייבוא נתונים";
+      setImportMessage(`שגיאה: ${errorMsg}`);
       setTimeout(() => setImportMessage(null), 8000);
     }
     setIsImporting(false);
