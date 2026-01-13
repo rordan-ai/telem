@@ -2,12 +2,12 @@ import { createClient } from 'npm:@base44/sdk@0.8.6';
 
 // פונקציה לקבלת קורות חיים מ-Webhook (Make.com)
 // מחפשת מועמד קיים לפי שם או אימייל ומעדכנת את קישור קורות החיים שלו
-// כתובת ה-URL תמצא בלוח הבקרה: קוד -> פונקציות -> webhookCandidate
 
 const VALID_API_KEY = "798bcce7985e43dfa0d3e1372dca4837";
 
 Deno.serve(async (req) => {
   console.log("🚀 [WEBHOOK] Received request");
+  console.log("🔗 [WEBHOOK] Method:", req.method);
   
   // תמיכה ב-CORS עבור Make.com
   if (req.method === "OPTIONS") {
@@ -21,11 +21,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // בדיקת API key
+    // בדיקת API key מה-headers
     const apiKey = req.headers.get("api_key") || req.headers.get("Api-Key") || req.headers.get("API_KEY");
-    console.log("🔑 [WEBHOOK] Received API key:", apiKey ? "present" : "missing");
+    console.log("🔑 [WEBHOOK] Received API key:", apiKey ? apiKey.substring(0,8) + "..." : "missing");
     
-    if (apiKey !== VALID_API_KEY) {
+    if (!apiKey || apiKey !== VALID_API_KEY) {
       return Response.json({ 
         success: false, 
         error: "Invalid or missing API key" 
@@ -35,10 +35,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // יצירת קליינט עם service role
+    // יצירת קליינט עם app ID בלבד (ללא auth)
     const base44 = createClient({ 
-      appId: Deno.env.get("BASE44_APP_ID"),
-      serviceRoleKey: Deno.env.get("BASE44_SERVICE_ROLE_KEY")
+      appId: Deno.env.get("BASE44_APP_ID")
     });
     
     // קבלת הנתונים מהבקשה
@@ -56,23 +55,29 @@ Deno.serve(async (req) => {
       return Response.json({ 
         success: false, 
         error: "Missing required field: candidate_name" 
-      }, { status: 400 });
+      }, { 
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     if (!cvUrl) {
       return Response.json({ 
         success: false, 
         error: "Missing required field: cv_url" 
-      }, { status: 400 });
+      }, { 
+        status: 400,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
 
     // טעינת כל המועמדים
     console.log("🔍 [WEBHOOK] Searching for candidate...");
     const allCandidates = await base44.entities.Candidate.list();
+    console.log(`📊 [WEBHOOK] Found ${allCandidates.length} total candidates`);
     
-    // חיפוש מועמד לפי שם או אימייל
+    // חיפוש מועמד לפי שם
     let foundCandidate = null;
-    
     const searchName = name.toLowerCase();
     
     for (const candidate of allCandidates) {
