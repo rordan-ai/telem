@@ -261,7 +261,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
               </>
             )}
 
-            {candidate.position !== 'climbing_wall' && candidate.position !== 'manager_commerce' && (
+            {candidate.position !== 'climbing_wall' && candidate.position !== 'manager_commerce' && candidate.position !== 'accountant_manager' && (
               <>
                 <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
@@ -290,6 +290,27 @@ export default function CandidateCard({ candidate, onUpdate }) {
                 <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-semibold min-w-[80px]">רכב/ניידות:</span>
                   <span className="text-slate-200">{candidate.transportation || '-'}</span>
+                </div>
+              </>
+            )}
+
+            {candidate.position === 'accountant_manager' && (
+              <>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
+                  <span className="text-slate-200">{candidate.contact_time || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">תעודת מנהלת חשבונות:</span>
+                  <span className="text-slate-200">{candidate.accountant_certificate || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בסיסי בקומקס:</span>
+                  <span className="text-slate-200">{candidate.accountant_comax_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בתפקיד:</span>
+                  <span className="text-slate-200">{candidate.accountant_role_experience || '-'}</span>
                 </div>
               </>
             )}
