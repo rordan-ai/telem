@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// פונקציה לקבלת מועמדים מ-Webhook (Make.com)
+// פונקציה לקבלת קורות חיים מ-Webhook (Make.com)
+// מחפשת מועמד קיים לפי שם או אימייל ומעדכנת את קישור קורות החיים שלו
 // כתובת ה-URL תמצא בלוח הבקרה: קוד -> פונקציות -> webhookCandidate
 
 Deno.serve(async (req) => {
@@ -24,46 +25,83 @@ Deno.serve(async (req) => {
     const data = await req.json();
     console.log("📋 [WEBHOOK] Received data:", JSON.stringify(data));
 
-    // וולידציה בסיסית
-    const name = data.name || data.full_name || '';
-    const email = data.email || '';
-    const phone = data.phone || data.telephone || '';
+    // שליפת הנתונים
+    const name = (data.name || data.full_name || '').trim();
+    const email = (data.email || '').trim().toLowerCase();
     const cvUrl = data.cv_url || data.cvUrl || data.resume_url || data.resumeUrl || '';
 
-    if (!name) {
+    if (!name && !email) {
       return Response.json({ 
         success: false, 
-        error: "Missing required field: name" 
+        error: "Missing required field: name or email" 
       }, { status: 400 });
     }
 
-    // יצירת מועמד חדש
-    const candidateData = {
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      cv_url: cvUrl,
-      position: "website_cv",
-      status: "not_handled",
-      is_deleted_by_app: false,
-      contact_time: new Date().toISOString(),
-      notes: data.notes || data.message || ''
-    };
+    if (!cvUrl) {
+      return Response.json({ 
+        success: false, 
+        error: "Missing required field: cv_url" 
+      }, { status: 400 });
+    }
 
-    console.log("📝 [WEBHOOK] Creating candidate:", JSON.stringify(candidateData));
+    // טעינת כל המועמדים
+    console.log("🔍 [WEBHOOK] Searching for candidate...");
+    const allCandidates = await base44.asServiceRole.entities.Candidate.list();
     
-    const created = await base44.asServiceRole.entities.Candidate.create(candidateData);
+    // חיפוש מועמד לפי שם או אימייל
+    let foundCandidate = null;
     
-    console.log("✅ [WEBHOOK] Candidate created successfully:", created.id);
+    for (const candidate of allCandidates) {
+      const candidateName = (candidate.name || '').trim().toLowerCase();
+      const candidateEmail = (candidate.email || '').trim().toLowerCase();
+      
+      // התאמה לפי אימייל (עדיפות ראשונה)
+      if (email && candidateEmail && candidateEmail === email) {
+        foundCandidate = candidate;
+        console.log(`✅ [WEBHOOK] Found by email: ${candidate.name}`);
+        break;
+      }
+      
+      // התאמה לפי שם (התאמה מלאה או חלקית)
+      if (name && candidateName) {
+        const searchName = name.toLowerCase();
+        if (candidateName === searchName || candidateName.includes(searchName) || searchName.includes(candidateName)) {
+          foundCandidate = candidate;
+          console.log(`✅ [WEBHOOK] Found by name: ${candidate.name}`);
+          break;
+        }
+      }
+    }
+
+    if (!foundCandidate) {
+      console.log(`⚠️ [WEBHOOK] No candidate found for name="${name}", email="${email}"`);
+      return Response.json({
+        success: false,
+        error: "לא נמצא מועמד תואם",
+        searchedName: name,
+        searchedEmail: email
+      }, { 
+        status: 404,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    // עדכון קורות החיים למועמד שנמצא
+    console.log(`📝 [WEBHOOK] Updating cv_url for ${foundCandidate.name} (${foundCandidate.id})`);
+    await base44.asServiceRole.entities.Candidate.update(foundCandidate.id, {
+      cv_url: cvUrl
+    });
+    
+    console.log("✅ [WEBHOOK] CV updated successfully");
 
     return Response.json({
       success: true,
-      message: "מועמד נוסף בהצלחה",
-      candidateId: created.id
+      message: "קורות חיים עודכנו בהצלחה",
+      candidateId: foundCandidate.id,
+      candidateName: foundCandidate.name,
+      position: foundCandidate.position
     }, {
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      }
+      headers: { "Access-Control-Allow-Origin": "*" }
     });
 
   } catch (error) {
@@ -73,9 +111,7 @@ Deno.serve(async (req) => {
       error: error.message 
     }, { 
       status: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      }
+      headers: { "Access-Control-Allow-Origin": "*" }
     });
   }
 });
