@@ -198,6 +198,12 @@ Deno.serve(async (req) => {
         const name = idx.name !== -1 ? String(row[idx.name] ?? '').trim() : '';
         const phone = idx.phone !== -1 ? String(row[idx.phone] ?? '').trim() : '';
 
+        // דילוג על שורות ללא שם או טלפון - מונע כפילויות
+        if (!name || !phone) {
+          console.log(`⚠️ [STEP 6] Skipping row with empty name or phone: name="${name}", phone="${phone}"`);
+          continue;
+        }
+
         const notesFromSheet = idx.notesFromSheet !== -1 ? String(row[idx.notesFromSheet] ?? '').trim() : '';
 
         const candidateData = {
