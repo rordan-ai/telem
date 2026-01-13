@@ -2,6 +2,55 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 const SHEET_ID = "12MZERyehuXxMUix9LYQSpdjespJ2bpDx1nyQYG-M4N4";
 
+// Hebrew to English transliteration map
+const hebrewToEnglishMap = {
+  'א': 'a', 'ב': 'b', 'ג': 'g', 'ד': 'd', 'ה': 'h', 'ו': 'v', 'ז': 'z',
+  'ח': 'ch', 'ט': 't', 'י': 'i', 'כ': 'k', 'ך': 'k', 'ל': 'l', 'מ': 'm',
+  'ם': 'm', 'נ': 'n', 'ן': 'n', 'ס': 's', 'ע': 'a', 'פ': 'p', 'ף': 'p',
+  'צ': 'ts', 'ץ': 'ts', 'ק': 'k', 'ר': 'r', 'ש': 'sh', 'ת': 't'
+};
+
+// Convert Hebrew name to English approximation
+const hebrewToEnglish = (hebrewName) => {
+  if (!hebrewName) return '';
+  return hebrewName.split('').map(char => hebrewToEnglishMap[char] || char).join('').toLowerCase();
+};
+
+// Normalize name for comparison (remove spaces, lowercase)
+const normalizeName = (name) => {
+  if (!name) return '';
+  return name.replace(/\s+/g, '').toLowerCase();
+};
+
+// Check if two names match (supports Hebrew/English)
+const namesMatch = (name1, name2) => {
+  if (!name1 || !name2) return false;
+  
+  const norm1 = normalizeName(name1);
+  const norm2 = normalizeName(name2);
+  
+  // Direct match
+  if (norm1 === norm2) return true;
+  
+  // Contains match
+  if (norm1.includes(norm2) || norm2.includes(norm1)) return true;
+  
+  // Hebrew to English transliteration match
+  const eng1 = hebrewToEnglish(name1);
+  const eng2 = hebrewToEnglish(name2);
+  
+  if (eng1 && eng2) {
+    if (eng1 === eng2) return true;
+    if (eng1.includes(eng2) || eng2.includes(eng1)) return true;
+  }
+  
+  // Check if one is Hebrew transliteration of the other
+  if (eng1 && norm2.includes(eng1.substring(0, 4))) return true;
+  if (eng2 && norm1.includes(eng2.substring(0, 4))) return true;
+  
+  return false;
+};
+
 // Robust CSV Parser
 const parseCSV = (text) => {
   const rows = [];
@@ -117,8 +166,80 @@ Deno.serve(async (req) => {
     const toUpdate = [];
 
     console.log(`📊 [STEP 6] Processing sheets...`);
+    
+    // Process CV update sheet separately
+    const cvSheet = allSheets.find(s => s && s.tab.name === "cv_update");
+    if (cvSheet) {
+      console.log(`📄 [CV] Processing CV update sheet...`);
+      const cvRows = parseCSV(cvSheet.csvText);
+      if (cvRows && cvRows.length > 1) {
+        let cvUpdated = 0;
+        for (const row of cvRows.slice(1)) {
+          // עמודות: A=שם מועמד, B=תפקיד, C=כתובת, D=קורות חיים, E=אימייל
+          const cvName = String(row[0] ?? '').trim();
+          const cvJobTitle = String(row[1] ?? '').trim();
+          const cvUrl = String(row[3] ?? '').trim();
+          const cvEmail = String(row[4] ?? '').trim();
+          
+          if (!cvName || !cvUrl) continue;
+          
+          // חיפוש מועמד קיים
+          let foundCandidate = null;
+          
+          // 1. ניסיון התאמה לפי אימייל (אם קיים)
+          if (cvEmail) {
+            foundCandidate = existingCandidates.find(c => 
+              c.email && c.email.toLowerCase() === cvEmail.toLowerCase()
+            );
+          }
+          
+          // 2. ניסיון התאמה לפי שם + תפקיד
+          if (!foundCandidate) {
+            foundCandidate = existingCandidates.find(c => {
+              const nameMatches = namesMatch(c.name, cvName);
+              if (!nameMatches) return false;
+              
+              // אם יש תפקיד בגיליון, לבדוק התאמה
+              if (cvJobTitle) {
+                const jobMatches = c.job_title && (
+                  c.job_title.includes(cvJobTitle) || 
+                  cvJobTitle.includes(c.job_title) ||
+                  c.branch && (c.branch.includes(cvJobTitle) || cvJobTitle.includes(c.branch))
+                );
+                return jobMatches;
+              }
+              return true;
+            });
+          }
+          
+          // 3. ניסיון התאמה לפי שם בלבד (אם לא נמצא)
+          if (!foundCandidate) {
+            foundCandidate = existingCandidates.find(c => namesMatch(c.name, cvName));
+          }
+          
+          if (foundCandidate) {
+            // עדכון קורות חיים ואימייל (אם קיים)
+            const updateData = { cv_url: cvUrl };
+            if (cvEmail && !foundCandidate.email) {
+              updateData.email = cvEmail;
+            }
+            
+            toUpdate.push({
+              id: foundCandidate.id,
+              data: updateData
+            });
+            cvUpdated++;
+            console.log(`✅ [CV] Matched: ${cvName} -> ${foundCandidate.name} (${foundCandidate.id})`);
+          } else {
+            console.log(`⚠️ [CV] No match found for: ${cvName} (${cvJobTitle})`);
+          }
+        }
+        console.log(`📄 [CV] Updated ${cvUpdated} candidates with CV links`);
+      }
+    }
+    
     for (const sheetData of allSheets) {
-      if (!sheetData) continue;
+      if (!sheetData || sheetData.tab.name === "cv_update") continue;
       const { tab, csvText } = sheetData;
       console.log(`📊 [STEP 6] Processing: ${tab.sheetName}`);
 
