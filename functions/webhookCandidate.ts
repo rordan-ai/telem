@@ -53,35 +53,26 @@ Deno.serve(async (req) => {
     // חיפוש מועמד לפי שם או אימייל
     let foundCandidate = null;
     
+    const searchName = name.toLowerCase();
+    
     for (const candidate of allCandidates) {
       const candidateName = (candidate.name || '').trim().toLowerCase();
-      const candidateEmail = (candidate.email || '').trim().toLowerCase();
-      
-      // התאמה לפי אימייל (עדיפות ראשונה)
-      if (email && candidateEmail && candidateEmail === email) {
-        foundCandidate = candidate;
-        console.log(`✅ [WEBHOOK] Found by email: ${candidate.name}`);
-        break;
-      }
       
       // התאמה לפי שם (התאמה מלאה או חלקית)
-      if (name && candidateName) {
-        const searchName = name.toLowerCase();
-        if (candidateName === searchName || candidateName.includes(searchName) || searchName.includes(candidateName)) {
-          foundCandidate = candidate;
-          console.log(`✅ [WEBHOOK] Found by name: ${candidate.name}`);
-          break;
-        }
+      if (candidateName === searchName || candidateName.includes(searchName) || searchName.includes(candidateName)) {
+        foundCandidate = candidate;
+        console.log(`✅ [WEBHOOK] Found by name: ${candidate.name}`);
+        break;
       }
     }
 
     if (!foundCandidate) {
-      console.log(`⚠️ [WEBHOOK] No candidate found for name="${name}", email="${email}"`);
+      console.log(`⚠️ [WEBHOOK] No candidate found for name="${name}"`);
       return Response.json({
         success: false,
         error: "לא נמצא מועמד תואם",
         searchedName: name,
-        searchedEmail: email
+        searchedJobTitle: jobTitle
       }, { 
         status: 404,
         headers: { "Access-Control-Allow-Origin": "*" }
