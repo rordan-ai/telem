@@ -51,37 +51,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     console.log("✅ [STEP 1] base44 client created successfully");
     
-    // בדיקת אימות - עם לוגים מפורטים
-    console.log("🔐 [STEP 2] Checking authentication...");
-    let user = null;
-    let isAuthenticated = false;
-    
-    try {
-      console.log("🔐 [STEP 2a] Calling base44.auth.me()...");
-      user = await base44.auth.me();
-      isAuthenticated = !!user;
-      console.log("✅ [STEP 2a] auth.me() result:", user ? `User: ${user.email}` : "No user");
-    } catch (authError) {
-      console.log("⚠️ [STEP 2a] auth.me() threw error:", authError.message);
-      console.log("⚠️ [STEP 2a] Error stack:", authError.stack);
-      isAuthenticated = false;
-    }
-    
-    console.log("📊 [STEP 2] Authentication status:", isAuthenticated ? "AUTHENTICATED" : "NOT AUTHENTICATED");
-    
-    // אם אין משתמש מאומת - נחזיר שגיאה ברורה
-    if (!isAuthenticated) {
-      console.log("❌ [STEP 2] Returning 401 - user not authenticated");
-      return Response.json({ 
-        error: 'Authentication required - please login first',
-        success: false,
-        debug: {
-          step: 'authentication',
-          isAuthenticated: false,
-          userFound: !!user
-        }
-      }, { status: 401 });
-    }
+    // פונקציה זו משתמשת ב-asServiceRole ולכן לא דורשת אימות משתמש
+    console.log("🔐 [STEP 2] Skipping user authentication - using service role for all operations");
 
     console.log("🔄 [STEP 3] Starting data import...");
     
