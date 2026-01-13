@@ -95,27 +95,31 @@ export default function CandidateCard({ candidate, onUpdate }) {
       className="bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
 
       <div className="bg-slate-900 p-4 relative">
-        {/* CV Icon - Absolute positioned top right */}
-                      {candidate.cv_url && (
-                        <a
-                          href={candidate.cv_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 100 }}
-                          className="hover:opacity-80 transition-opacity block text-center"
-                          title="צפה בקורות חיים">
-                          <img
-                            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
-                            alt="קורות חיים"
-                            style={{ width: '36px', height: '36px', display: 'block' }}
-                          />
-                          <span className="text-[10px] text-white mt-0.5 block">קו"ח</span>
-                        </a>
-                      )}
-        
         {/* Header Row */}
-                      <div className="flex items-center justify-between gap-3 mb-3">
-                        <div className="text-gray-50 flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          {/* CV Icon - aligned with user icon */}
+          <div className="flex-shrink-0 w-10 flex items-center justify-center">
+            {candidate.cv_url ? (
+              <a
+                href={candidate.cv_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity block text-center"
+                title="צפה בקורות חיים">
+                <img
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
+                  alt="קורות חיים"
+                  className="w-9 h-9 mx-auto"
+                />
+                <span className="text-[10px] text-white mt-0.5 block">קו"ח</span>
+              </a>
+            ) : (
+              <div className="w-9 h-9" />
+            )}
+          </div>
+          
+          {/* User info - centered */}
+          <div className="text-gray-50 flex items-center gap-3 flex-1 min-w-0">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-slate-500" />
             </div>
@@ -134,9 +138,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
               <div className="flex items-center gap-3 flex-wrap mt-1">
                 <a
                   href={`tel:${candidate.phone}`} className="text-slate-50 text-sm hover:text-slate-700 transition-colors"
-
                   dir="ltr">
-
                   {candidate.phone}
                 </a>
                 {candidate.city &&
@@ -154,16 +156,13 @@ export default function CandidateCard({ candidate, onUpdate }) {
             target="_blank"
             rel="noopener noreferrer"
             className="flex-shrink-0">
-
             <Button
               size="sm"
               className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 h-12 shadow-sm">
-
               <img
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/fafb8b988_.png"
                 alt="WhatsApp"
                 className="w-8 h-8" />
-
             </Button>
           </a>
         </div>
