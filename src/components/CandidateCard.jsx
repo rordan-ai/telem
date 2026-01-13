@@ -180,23 +180,32 @@ export default function CandidateCard({ candidate, onUpdate }) {
         </div>
 
         {/* Status Row */}
-        <div className="flex items-center gap-2 mb-3">
-          <Select value={status} onValueChange={handleStatusChange}>
-            <SelectTrigger className={`w-full rounded-xl border-2 h-10 ${currentStatus?.color}`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) =>
-              <SelectItem key={option.value} value={option.value}>
-                  <span className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${option.value === 'not_handled' ? 'bg-slate-400' : option.value === 'message_sent' ? 'bg-amber-500' : option.value === 'relevant' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                    {option.label}
-                  </span>
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Select value={status} onValueChange={handleStatusChange}>
+                          <SelectTrigger className={`flex-1 rounded-xl border-2 h-9 text-sm ${currentStatus?.color}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statusOptions.map((option) =>
+                            <SelectItem key={option.value} value={option.value}>
+                                <span className="flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${option.value === 'not_handled' ? 'bg-slate-400' : option.value === 'message_sent' ? 'bg-amber-500' : option.value === 'relevant' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                  {option.label}
+                                </span>
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <button
+                          onClick={() => {
+                            setDeleteSource('trash');
+                            setShowDeleteDialog(true);
+                          }}
+                          className="flex-shrink-0 w-9 h-9 rounded-xl bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center transition-colors"
+                          title="מחק מועמד">
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
 
         {/* Notes Input with Save Button */}
         <div className="relative mb-3">
