@@ -112,12 +112,11 @@ export default function CandidateCard({ candidate, onUpdate }) {
                 href={candidate.cv_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors"
                 title="צפה בקורות חיים">
                 <img
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
                   alt="קורות חיים"
-                  className="w-5 h-5"
+                  className="w-8 h-8"
                 />
               </a>
             )}
