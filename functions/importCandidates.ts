@@ -189,8 +189,6 @@ Deno.serve(async (req) => {
       for (const row of rows.slice(1)) {
         const name = idx.name !== -1 ? String(row[idx.name] ?? '').trim() : '';
         const phone = idx.phone !== -1 ? String(row[idx.phone] ?? '').trim() : '';
-        
-        if (!name || !phone) continue;
 
         const notesFromSheet = idx.notesFromSheet !== -1 ? String(row[idx.notesFromSheet] ?? '').trim() : '';
 
