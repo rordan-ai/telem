@@ -94,25 +94,27 @@ export default function CandidateCard({ candidate, onUpdate }) {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
 
-      <div className="bg-slate-900 p-4">
+      <div className="bg-slate-900 p-4 relative">
+        {/* CV Icon - Absolute positioned top right */}
+        {candidate.cv_url && (
+          <a
+            href={candidate.cv_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 100 }}
+            className="hover:opacity-80 transition-opacity block"
+            title="צפה בקורות חיים">
+            <img
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
+              alt="קורות חיים"
+              style={{ width: '28px', height: '28px', display: 'block' }}
+            />
+          </a>
+        )}
+        
         {/* Header Row */}
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
-            {/* CV Icon */}
-            {candidate.cv_url && (
-              <a
-                href={candidate.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-shrink-0 w-8 h-8 flex items-center justify-center hover:opacity-80 transition-opacity"
-                title="צפה בקורות חיים">
-                <img
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
-                  alt="קורות חיים"
-                  className="w-7 h-7"
-                />
-              </a>
-            )}
             <button
               onClick={() => {
                 setDeleteSource('trash');
