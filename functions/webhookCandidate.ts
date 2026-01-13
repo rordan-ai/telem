@@ -25,15 +25,17 @@ Deno.serve(async (req) => {
     const data = await req.json();
     console.log("📋 [WEBHOOK] Received data:", JSON.stringify(data));
 
-    // שליפת הנתונים
-    const name = (data.name || data.full_name || '').trim();
-    const email = (data.email || '').trim().toLowerCase();
-    const cvUrl = data.cv_url || data.cvUrl || data.resume_url || data.resumeUrl || '';
+    // שליפת הנתונים - מותאם ל-Make.com
+    const name = (data.candidate_name || data.name || '').trim();
+    const jobTitle = (data.job_title || '').trim();
+    const cvUrl = data.cv_url || '';
 
-    if (!name && !email) {
+    console.log(`📋 [WEBHOOK] Parsed: name="${name}", job_title="${jobTitle}", cv_url="${cvUrl}"`);
+
+    if (!name) {
       return Response.json({ 
         success: false, 
-        error: "Missing required field: name or email" 
+        error: "Missing required field: candidate_name" 
       }, { status: 400 });
     }
 
