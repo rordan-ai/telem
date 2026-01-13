@@ -42,20 +42,64 @@ const parseCSV = (text) => {
 };
 
 Deno.serve(async (req) => {
+  console.log("🚀 [START] importCandidates function called");
+  console.log("📋 [DEBUG] Request method:", req.method);
+  console.log("📋 [DEBUG] Request headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
+  
   try {
+    console.log("🔧 [STEP 1] Creating base44 client from request...");
     const base44 = createClientFromRequest(req);
+    console.log("✅ [STEP 1] base44 client created successfully");
     
-    // אימות משתמש
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // בדיקת אימות - עם לוגים מפורטים
+    console.log("🔐 [STEP 2] Checking authentication...");
+    let user = null;
+    let isAuthenticated = false;
+    
+    try {
+      console.log("🔐 [STEP 2a] Calling base44.auth.me()...");
+      user = await base44.auth.me();
+      isAuthenticated = !!user;
+      console.log("✅ [STEP 2a] auth.me() result:", user ? `User: ${user.email}` : "No user");
+    } catch (authError) {
+      console.log("⚠️ [STEP 2a] auth.me() threw error:", authError.message);
+      console.log("⚠️ [STEP 2a] Error stack:", authError.stack);
+      isAuthenticated = false;
+    }
+    
+    console.log("📊 [STEP 2] Authentication status:", isAuthenticated ? "AUTHENTICATED" : "NOT AUTHENTICATED");
+    
+    // אם אין משתמש מאומת - נחזיר שגיאה ברורה
+    if (!isAuthenticated) {
+      console.log("❌ [STEP 2] Returning 401 - user not authenticated");
+      return Response.json({ 
+        error: 'Authentication required - please login first',
+        success: false,
+        debug: {
+          step: 'authentication',
+          isAuthenticated: false,
+          userFound: !!user
+        }
+      }, { status: 401 });
     }
 
-    console.log("🔄 התחלת ייבוא נתונים...");
+    console.log("🔄 [STEP 3] Starting data import...");
     
     // טעינת כל המועמדים הקיימים
-    const existingCandidates = await base44.asServiceRole.entities.Candidate.list();
-    console.log(`✅ נטענו ${existingCandidates.length} מועמדים קיימים`);
+    console.log("📥 [STEP 4] Loading existing candidates with asServiceRole...");
+    let existingCandidates = [];
+    try {
+      existingCandidates = await base44.asServiceRole.entities.Candidate.list();
+      console.log(`✅ [STEP 4] Loaded ${existingCandidates.length} existing candidates`);
+    } catch (loadError) {
+      console.log("❌ [STEP 4] Failed to load candidates:", loadError.message);
+      console.log("❌ [STEP 4] Error stack:", loadError.stack);
+      return Response.json({ 
+        error: `Failed to load candidates: ${loadError.message}`,
+        success: false,
+        debug: { step: 'load_candidates' }
+      }, { status: 500 });
+    }
     
     const existingMap = new Map();
     existingCandidates.forEach(c => {
@@ -72,42 +116,43 @@ Deno.serve(async (req) => {
     ];
 
     // שליפה מקבילית של כל הגיליונות
-    console.log(`📊 שולף ${tabs.length} גיליונות במקביל...`);
+    console.log(`📊 [STEP 5] Fetching ${tabs.length} sheets in parallel...`);
     const fetchPromises = tabs.map(async (tab) => {
       try {
         const sheetNameEncoded = encodeURIComponent(tab.sheetName);
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetNameEncoded}`;
-        console.log(`🔍 שולף גיליון: ${tab.sheetName}`);
+        console.log(`🔍 [STEP 5] Fetching sheet: ${tab.sheetName}`);
         const res = await fetch(url, { 
-          signal: AbortSignal.timeout(10000) // 10 seconds timeout
+          signal: AbortSignal.timeout(10000)
         });
         if (!res.ok) {
-          console.log(`❌ נכשל לטעון גיליון ${tab.sheetName}: status ${res.status}`);
+          console.log(`❌ [STEP 5] Failed to fetch ${tab.sheetName}: status ${res.status}`);
           return null;
         }
         const csvText = await res.text();
-        console.log(`✅ נשלף גיליון: ${tab.sheetName} (${csvText.length} תווים)`);
+        console.log(`✅ [STEP 5] Fetched ${tab.sheetName} (${csvText.length} chars)`);
         return { tab, csvText };
       } catch (err) {
-        console.log(`❌ שגיאה בשליפת ${tab.sheetName}:`, err.message);
+        console.log(`❌ [STEP 5] Error fetching ${tab.sheetName}:`, err.message);
         return null;
       }
     });
     
     const allSheets = await Promise.all(fetchPromises);
-    console.log(`✅ סיימתי לשלוף את כל הגיליונות`);
+    console.log(`✅ [STEP 5] All sheets fetched`);
 
     const toCreate = [];
     const toUpdate = [];
 
+    console.log(`📊 [STEP 6] Processing sheets...`);
     for (const sheetData of allSheets) {
       if (!sheetData) continue;
       const { tab, csvText } = sheetData;
-      console.log(`📊 מעבד גיליון: ${tab.sheetName}`);
+      console.log(`📊 [STEP 6] Processing: ${tab.sheetName}`);
 
       const rows = parseCSV(csvText);
       if (!rows || rows.length < 2) {
-        console.log(`⚠️ אין מספיק שורות בגיליון ${tab.sheetName}`);
+        console.log(`⚠️ [STEP 6] Not enough rows in ${tab.sheetName}`);
         continue;
       }
 
@@ -248,37 +293,43 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`📊 סיכום: ${toCreate.length} חדשים, ${toUpdate.length} עדכונים`);
+    console.log(`📊 [STEP 7] Summary: ${toCreate.length} new, ${toUpdate.length} updates`);
 
     // ביצוע עדכונים
-    console.log(`🔄 מעדכן ${toUpdate.length} מועמדים...`);
+    console.log(`🔄 [STEP 8] Updating ${toUpdate.length} candidates...`);
+    let updateErrors = 0;
     for (let i = 0; i < toUpdate.length; i++) {
       const update = toUpdate[i];
       try {
         await base44.asServiceRole.entities.Candidate.update(update.id, update.data);
       } catch (err) {
-        console.log(`⚠️ שגיאה בעדכון מועמד ${update.data.name}:`, err.message);
+        updateErrors++;
+        console.log(`⚠️ [STEP 8] Error updating ${update.data.name}:`, err.message);
       }
     }
+    console.log(`✅ [STEP 8] Updates complete. Errors: ${updateErrors}`);
 
     // ביצוע הוספות
     if (toCreate.length > 0) {
-      console.log(`➕ מוסיף ${toCreate.length} מועמדים חדשים...`);
+      console.log(`➕ [STEP 9] Creating ${toCreate.length} new candidates...`);
       const batchSize = 25;
+      let createErrors = 0;
       for (let i = 0; i < toCreate.length; i += batchSize) {
         const batch = toCreate.slice(i, i + batchSize);
         try {
           await base44.asServiceRole.entities.Candidate.bulkCreate(batch);
         } catch (err) {
-          console.log(`⚠️ שגיאה בהוספת מנה ${Math.floor(i / batchSize) + 1}:`, err.message);
+          createErrors++;
+          console.log(`⚠️ [STEP 9] Error creating batch ${Math.floor(i / batchSize) + 1}:`, err.message);
         }
         if (i + batchSize < toCreate.length) {
           await new Promise(r => setTimeout(r, 300));
         }
       }
+      console.log(`✅ [STEP 9] Creates complete. Errors: ${createErrors}`);
     }
 
-    console.log(`✅ הייבוא הושלם בהצלחה!`);
+    console.log(`🏁 [DONE] Import completed successfully!`);
     
     return Response.json({
       success: true,
@@ -288,11 +339,15 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("❌ שגיאה בייבוא:", error);
-    console.error("Stack trace:", error.stack);
+    console.error("❌ [ERROR] Import failed:", error.message);
+    console.error("❌ [ERROR] Stack trace:", error.stack);
     return Response.json({ 
       error: error.message,
-      success: false 
+      success: false,
+      debug: {
+        step: 'unknown',
+        errorType: error.constructor.name
+      }
     }, { status: 500 });
   }
 });
