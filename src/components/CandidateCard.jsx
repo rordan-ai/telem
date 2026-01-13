@@ -97,15 +97,31 @@ export default function CandidateCard({ candidate, onUpdate }) {
       <div className="bg-slate-900 p-4">
         {/* Header Row */}
         <div className="flex items-center justify-between gap-3 mb-3">
-          <button
-            onClick={() => {
-              setDeleteSource('trash');
-              setShowDeleteDialog(true);
-            }}
-            className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center transition-colors"
-            title="מחק מועמד">
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setDeleteSource('trash');
+                setShowDeleteDialog(true);
+              }}
+              className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 hover:bg-red-500/40 flex items-center justify-center transition-colors"
+              title="מחק מועמד">
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </button>
+            {candidate.cv_url && (
+              <a
+                href={candidate.cv_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 flex items-center justify-center transition-colors"
+                title="צפה בקורות חיים">
+                <img
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
+                  alt="קורות חיים"
+                  className="w-5 h-5"
+                />
+              </a>
+            )}
+          </div>
           <div className="text-gray-50 flex items-center gap-3 flex-1 min-w-0">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-slate-500" />
