@@ -112,11 +112,12 @@ export default function CandidateCard({ candidate, onUpdate }) {
                 href={candidate.cv_url}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="relative z-50"
                 title="צפה בקורות חיים">
                 <img
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
                   alt="קורות חיים"
-                  className="w-8 h-8"
+                  className="w-8 h-8 object-contain"
                 />
               </a>
             )}
