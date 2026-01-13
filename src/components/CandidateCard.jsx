@@ -100,20 +100,13 @@ export default function CandidateCard({ candidate, onUpdate }) {
           {/* CV Icon - aligned with user icon */}
           <div className="flex-shrink-0 w-10 flex items-center justify-center">
             {candidate.cv_url ? (
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await base44.functions.invoke('viewCV', { cv_url: candidate.cv_url });
-                    const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
-                    const url = window.URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-                  } catch (err) {
-                    console.error('Error opening CV:', err);
-                    // Fallback to direct link
-                    window.open(candidate.cv_url, '_blank');
-                  }
-                }}
-                className="hover:opacity-80 transition-opacity block text-center bg-transparent border-none cursor-pointer"
+              <a
+                href={candidate.cv_url.toLowerCase().includes('.pdf') 
+                  ? candidate.cv_url 
+                  : `https://docs.google.com/viewer?url=${encodeURIComponent(candidate.cv_url)}&embedded=true`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity block text-center"
                 title="צפה בקורות חיים">
                 <img
                   src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69627124175a0ec7a8b42b8e/b434f37ac_resume.png"
@@ -121,7 +114,7 @@ export default function CandidateCard({ candidate, onUpdate }) {
                   className="w-9 h-9 mx-auto"
                 />
                 <span className="text-[10px] text-white mt-0.5 block">קו"ח</span>
-              </button>
+              </a>
             ) : (
               <div className="w-9 h-9" />
             )}
