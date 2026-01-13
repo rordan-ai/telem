@@ -178,11 +178,11 @@ Deno.serve(async (req) => {
         console.log(`📄 [CV] First data row: ${JSON.stringify(cvRows[1])}`);
         let cvUpdated = 0;
         for (const row of cvRows.slice(1)) {
-          // עמודות: A=שם מועמד, B=תפקיד, C=כתובת, D=קורות חיים, E=אימייל
+          // עמודות: A=שם מועמד (0), B=תפקיד (1), C=קורות חיים URL (2), D=אימייל (3)
           const cvName = String(row[0] ?? '').trim();
           const cvJobTitle = String(row[1] ?? '').trim();
-          const cvUrl = String(row[3] ?? '').trim();
-          const cvEmail = String(row[4] ?? '').trim();
+          const cvUrl = String(row[2] ?? '').trim();
+          const cvEmail = String(row[3] ?? '').trim();
           
           console.log(`📄 [CV] Processing: name="${cvName}", job="${cvJobTitle}", url="${cvUrl?.substring(0,30)}...", email="${cvEmail}"`);
           
