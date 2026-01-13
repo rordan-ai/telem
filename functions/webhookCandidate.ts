@@ -1,8 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClient } from 'npm:@base44/sdk@0.8.6';
 
 // פונקציה לקבלת קורות חיים מ-Webhook (Make.com)
 // מחפשת מועמד קיים לפי שם או אימייל ומעדכנת את קישור קורות החיים שלו
 // כתובת ה-URL תמצא בלוח הבקרה: קוד -> פונקציות -> webhookCandidate
+
+const VALID_API_KEY = "798bcce7985e43dfa0d3e1372dca4837";
 
 Deno.serve(async (req) => {
   console.log("🚀 [WEBHOOK] Received request");
@@ -13,13 +15,31 @@ Deno.serve(async (req) => {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
+        "Access-Control-Allow-Headers": "Content-Type, api_key"
       }
     });
   }
 
   try {
-    const base44 = createClientFromRequest(req);
+    // בדיקת API key
+    const apiKey = req.headers.get("api_key") || req.headers.get("Api-Key") || req.headers.get("API_KEY");
+    console.log("🔑 [WEBHOOK] Received API key:", apiKey ? "present" : "missing");
+    
+    if (apiKey !== VALID_API_KEY) {
+      return Response.json({ 
+        success: false, 
+        error: "Invalid or missing API key" 
+      }, { 
+        status: 401,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    // יצירת קליינט עם service role
+    const base44 = createClient({ 
+      appId: Deno.env.get("BASE44_APP_ID"),
+      serviceRoleKey: Deno.env.get("BASE44_SERVICE_ROLE_KEY")
+    });
     
     // קבלת הנתונים מהבקשה
     const data = await req.json();
