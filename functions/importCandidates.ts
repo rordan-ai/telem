@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
       const idx = {
         name: tab.name === "climbing_wall" ? 2 : (tab.name === "accountant_manager" ? 1 : nameIdx),
         phone: tab.name === "climbing_wall" ? 3 : (tab.name === "accountant_manager" ? -1 : findIndex(["טלפון", "נייד", "סלולרי"])),
-        email: tab.name === "climbing_wall" ? 10 : findIndex(["אימייל", "דואר", "מייל"]),
+        email: tab.name === "climbing_wall" ? 10 : (tab.name === "accountant_manager" ? 8 : findIndex(["אימייל", "דואר", "מייל"])),
         branch: tab.name === "climbing_wall" ? 1 : findIndex(["מודעה", "סניף", "מועמדות לסניף"]),
         campaign: findIndex(["שם הקמפיין", "קמפיין"]),
         time: tab.name === "climbing_wall" ? 0 : (tab.name === "accountant_manager" ? 0 : findIndex(["תאריך ושעה", "תאריך", "שעה", "תאיך כניסה"])),
