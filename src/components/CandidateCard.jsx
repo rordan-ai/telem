@@ -114,59 +114,54 @@ export default function CandidateCard({ candidate, onUpdate }) {
                       )}
         
         {/* Header Row */}
-                      <div className="flex items-center justify-between gap-3 mb-3">
-                        <div className="text-gray-50 flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-slate-500" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-slate-50 flex items-center gap-2 flex-wrap">
-                <h3 className="text-slate-50 text-base font-semibold">
-                  {candidate.name}
-                </h3>
-                {candidate.contact_time &&
-                <span className="text-slate-50 text-xs flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatContactTime(candidate.contact_time)}
-                  </span>
-                }
-              </div>
-              <div className="flex items-center gap-3 flex-wrap mt-1">
-                <a
-                  href={`tel:${candidate.phone}`} className="text-slate-50 text-sm hover:text-slate-700 transition-colors"
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="text-gray-50 flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-slate-50 flex items-center gap-2 flex-wrap">
+                        <h3 className="text-slate-50 text-base font-semibold">
+                          {candidate.name}
+                        </h3>
+                        {candidate.contact_time &&
+                        <span className="text-slate-50 text-xs flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatContactTime(candidate.contact_time)}
+                          </span>
+                        }
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap mt-1">
+                        <a
+                          href={`tel:${candidate.phone}`} className="text-slate-50 text-sm hover:text-slate-700 transition-colors"
+                          dir="ltr">
+                          {candidate.phone}
+                        </a>
+                        {candidate.city &&
+                        <span className="text-slate-50 text-sm flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {candidate.city}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </div>
 
-                  dir="ltr">
-
-                  {candidate.phone}
-                </a>
-                {candidate.city &&
-                <span className="text-slate-50 text-sm flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {candidate.city}
-                  </span>
-                }
-              </div>
-            </div>
-          </div>
-          
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0">
-
-            <Button
-              size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 h-12 shadow-sm">
-
-              <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/fafb8b988_.png"
-                alt="WhatsApp"
-                className="w-8 h-8" />
-
-            </Button>
-          </a>
-        </div>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 h-12 shadow-sm">
+                      <img
+                        src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696259f154cc9f8fbcf36bd7/fafb8b988_.png"
+                        alt="WhatsApp"
+                        className="w-8 h-8" />
+                    </Button>
+                  </a>
+                </div>
 
         {/* Status Row */}
                       <div className="flex items-center gap-2 mb-3">
