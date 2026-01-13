@@ -7,7 +7,8 @@ const positions = [
 { id: "accountant_manager", label: "מנהלת חשבונות", icon: ShieldCheck },
 { id: "segan_beer_yaakov", label: "סגן באר יעקב", icon: Building2 },
 { id: "manager_commerce", label: "מנהל סחר", icon: Briefcase },
-{ id: "climbing_wall", label: "קיר טיפוס", icon: Users }];
+{ id: "climbing_wall", label: "קיר טיפוס", icon: Users },
+{ id: "website_cv", label: "קו\"ח מהאתר", icon: Briefcase }];
 
 
 export default function PositionTabs({ activePosition, onPositionChange, candidates = [] }) {
