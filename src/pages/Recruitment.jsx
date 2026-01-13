@@ -100,20 +100,21 @@ export default function Recruitment() {
     setImportStatus("קורא את הגיליונות...");
     console.log("🔄 קורא לפונקציית ייבוא בשרת...");
     
+    // הודעות סטטוס סימולטיביות - מוגדר מחוץ ל-try כדי שיהיה נגיש ב-catch
+    const statusMessages = [
+      { text: "קורא את הגיליונות...", delay: 0 },
+      { text: "משווה את הנתונים...", delay: 2000 },
+      { text: "מחלץ מועמדים חדשים...", delay: 4000 },
+      { text: "מעדכן את המסד נתונים...", delay: 6000 }
+    ];
+    
+    const statusTimeouts = [];
+    statusMessages.forEach(({ text, delay }) => {
+      const timeout = setTimeout(() => setImportStatus(text), delay);
+      statusTimeouts.push(timeout);
+    });
+    
     try {
-      // הודעות סטטוס סימולטיביות
-      const statusMessages = [
-        { text: "קורא את הגיליונות...", delay: 0 },
-        { text: "משווה את הנתונים...", delay: 2000 },
-        { text: "מחלץ מועמדים חדשים...", delay: 4000 },
-        { text: "מעדכן את המסד נתונים...", delay: 6000 }
-      ];
-      
-      const statusTimeouts = [];
-      statusMessages.forEach(({ text, delay }) => {
-        const timeout = setTimeout(() => setImportStatus(text), delay);
-        statusTimeouts.push(timeout);
-      });
       
       // קריאה לפונקציית השרת
       const { data } = await base44.functions.invoke('importCandidates', {});
