@@ -321,7 +321,8 @@ Deno.serve(async (req) => {
         accountantCertificate: tab.name === "accountant_manager" ? 3 : -1, // עמודה D - תעודת מנהלת חשבונות
         accountantExcelExp: tab.name === "accountant_manager" ? 4 : -1, // עמודה E - ניסיון באקסל
         accountantComaxExp: tab.name === "accountant_manager" ? 5 : -1, // עמודה F - ניסיון בקומקס
-        accountantRoleExp: tab.name === "accountant_manager" ? 6 : -1 // עמודה G - ניסיון בתפקיד
+        accountantRoleExp: tab.name === "accountant_manager" ? 6 : -1, // עמודה G - ניסיון בתפקיד
+        accountantTwoYearsExp: tab.name === "accountant_manager" ? 9 : -1 // עמודה J - האם יש שנתיים ניסיון בתחום
       };
 
       for (const row of rows.slice(1)) {
@@ -374,6 +375,7 @@ Deno.serve(async (req) => {
           candidateData.accountant_excel_experience = idx.accountantExcelExp !== -1 ? String(row[idx.accountantExcelExp] ?? '') : '';
           candidateData.accountant_comax_experience = idx.accountantComaxExp !== -1 ? String(row[idx.accountantComaxExp] ?? '') : '';
           candidateData.accountant_role_experience = idx.accountantRoleExp !== -1 ? String(row[idx.accountantRoleExp] ?? '') : '';
+          candidateData.accountant_two_years_experience = idx.accountantTwoYearsExp !== -1 ? String(row[idx.accountantTwoYearsExp] ?? '') : '';
         }
 
         const key = `${name}_${phone}_${tab.name}`;

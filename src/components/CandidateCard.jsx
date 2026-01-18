@@ -314,37 +314,41 @@ export default function CandidateCard({ candidate, onUpdate }) {
             )}
 
             {candidate.position === 'accountant_manager' && (
-                <>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
-                    <span className="text-slate-200">{candidate.contact_time || '-'}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[120px]">תעודת מנהלת חשבונות:</span>
-                    <span className="text-slate-200">{candidate.accountant_certificate || '-'}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בסיסי באקסל:</span>
-                    <span className="text-slate-200">{candidate.accountant_excel_experience || '-'}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בסיסי בקומקס:</span>
-                    <span className="text-slate-200">{candidate.accountant_comax_experience || '-'}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בתפקיד:</span>
-                    <span className="text-slate-200">{candidate.accountant_role_experience || '-'}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[80px]">עיר מגורים:</span>
-                    <span className="text-slate-200">{candidate.city || '-'}</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-slate-400 font-semibold min-w-[80px]">אימייל:</span>
-                    {candidate.email ? <a href={`mailto:${candidate.email}`} className="text-blue-400 hover:underline break-all">{candidate.email}</a> : <span className="text-slate-200">-</span>}
-                  </div>
-                </>
-              )}
+              <>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">תאריך פניה:</span>
+                  <span className="text-slate-200">{candidate.contact_time || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">תעודת מנהלת חשבונות:</span>
+                  <span className="text-slate-200">{candidate.accountant_certificate || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בסיסי באקסל:</span>
+                  <span className="text-slate-200">{candidate.accountant_excel_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בסיסי בקומקס:</span>
+                  <span className="text-slate-200">{candidate.accountant_comax_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בתפקיד:</span>
+                  <span className="text-slate-200">{candidate.accountant_role_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">האם יש שנתיים ניסיון בתחום?</span>
+                  <span className="text-slate-200">{candidate.accountant_two_years_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">עיר מגורים:</span>
+                  <span className="text-slate-200">{candidate.city || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[80px]">אימייל:</span>
+                  {candidate.email ? <a href={`mailto:${candidate.email}`} className="text-blue-400 hover:underline break-all">{candidate.email}</a> : <span className="text-slate-200">-</span>}
+                </div>
+              </>
+            )}
 
             {candidate.position === 'manager_commerce' && (
               <>
