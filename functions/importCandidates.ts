@@ -321,7 +321,7 @@ Deno.serve(async (req) => {
         accountantCertificate: tab.name === "accountant_manager" ? 3 : -1, // עמודה D - תעודת מנהלת חשבונות
         accountantExcelExp: tab.name === "accountant_manager" ? 4 : -1, // עמודה E - ניסיון באקסל
         accountantComaxExp: tab.name === "accountant_manager" ? 5 : -1, // עמודה F - ניסיון בקומקס
-        accountantRoleExp: tab.name === "accountant_manager" ? 6 : -1, // עמודה G - ניסיון בתפקיד
+        accountantRoleExp: tab.name === "accountant_manager" ? 10 : -1, // עמודה K - פירוט ניסיון
         accountantTwoYearsExp: tab.name === "accountant_manager" ? 9 : -1 // עמודה J - האם יש שנתיים ניסיון בתחום
       };
 

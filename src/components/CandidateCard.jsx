@@ -332,12 +332,12 @@ export default function CandidateCard({ candidate, onUpdate }) {
                   <span className="text-slate-200">{candidate.accountant_comax_experience || '-'}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-slate-400 font-semibold min-w-[120px]">ניסיון בתפקיד:</span>
-                  <span className="text-slate-200">{candidate.accountant_role_experience || '-'}</span>
-                </div>
-                <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-semibold min-w-[120px]">האם יש שנתיים ניסיון בתחום?</span>
                   <span className="text-slate-200">{candidate.accountant_two_years_experience || '-'}</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-400 font-semibold min-w-[120px]">פירוט ניסיון:</span>
+                  <span className="text-slate-200">{candidate.accountant_role_experience || '-'}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-slate-400 font-semibold min-w-[80px]">עיר מגורים:</span>
