@@ -376,6 +376,13 @@ Deno.serve(async (req) => {
           candidateData.accountant_comax_experience = idx.accountantComaxExp !== -1 ? String(row[idx.accountantComaxExp] ?? '') : '';
           candidateData.accountant_role_experience = idx.accountantRoleExp !== -1 ? String(row[idx.accountantRoleExp] ?? '') : '';
           candidateData.accountant_two_years_experience = idx.accountantTwoYearsExp !== -1 ? String(row[idx.accountantTwoYearsExp] ?? '') : '';
+          
+          // Debug log for accountant manager fields
+          if (name.toLowerCase().includes('avigail') || name.toLowerCase().includes('אביגיל')) {
+            console.log(`🔍 [DEBUG AVIGAIL] Row data: ${JSON.stringify(row)}`);
+            console.log(`🔍 [DEBUG AVIGAIL] accountantRoleExp index: ${idx.accountantRoleExp}, value from row[10]: "${row[10]}"`);
+            console.log(`🔍 [DEBUG AVIGAIL] accountant_role_experience: "${candidateData.accountant_role_experience}"`);
+          }
         }
 
         const key = `${name}_${phone}_${tab.name}`;
